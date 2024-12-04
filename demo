@@ -1,0 +1,53 @@
+IP-адрес машин
+nano /etc/network/interfaces
+
+ISP:
+auto ens3
+iface ens3 inet static
+address 10.0.173.2/24
+gateway 10.0.173.11
+auto ens4
+iface ens4 inet static
+address 11.11.11.1/30
+auto ens5
+iface ens5 inet static
+address 22.22.22.1/30
+auto ens6
+iface ens6 inet static
+address 33.33.33.1/30
+
+HQ-R:
+auto ens3
+iface ens3 inet static
+address 11.11.11.2/30
+gateway 11.11.11.1
+auto ens3
+iface ens3 inet static
+address 192.168.0.1/25
+
+HQ-SRV:
+auto ens3
+iface ens3 inet static
+address 192.168.0.2/25
+gateway 192.168.0.1
+
+BR-R:
+auto ens3
+iface ens3 inet static
+address 22.22.22.2/30
+gateway 22.22.22.1
+auto ens4
+iface ens4 inet static
+address 192.168.100.1/27
+
+BR-SRV:
+auto ens3
+iface ens3 inet static
+address 192.168.100.2/27
+gateway 192.168.100.1
+
+CLI:
+auto ens3
+iface ens3 inet static
+address 33.33.33.2/30
+gateway 33.33.33.1
