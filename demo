@@ -1,4 +1,15 @@
-IP-адрес машин
+#Присваиваем имена в соответствии с топологией
+hostnamectl set-hostname <NAME>
+exec bash
+
+#Добавление пользователей
+useradd -m NAME -G sudo -s /bin/bash
+paswd NAME
+
+useradd -c "NAME" admin
+passwd NAME
+
+#IP-адрес машин
 nano /etc/network/interfaces
 
 ISP:
