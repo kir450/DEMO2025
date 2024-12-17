@@ -6,6 +6,8 @@ exec bash
 useradd -c "NAME" admin
 passwd NAME
 
+Iptables –t nat –A POSTROUTING –o ens3-j MASQUERADE
+
 #Установка DHCP-сервера
 Обновите список пакетов:
 
