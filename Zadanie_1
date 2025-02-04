@@ -1,4 +1,20 @@
+Чтобы задать имя хоста в системе, вводим команду
+
+ISP
+hostnamectl set-hostname isp.au-team.irpo; exec bash
+HQ-RTR
+hostnamectl set-hostname hq-rtr.au-team.irpo; exec bash
+BR-RTR
+hostnamectl set-hostname br-rtr.au-team.irpo; exec bash
+HQ-SRV
+hostnamectl set-hostname hq-srv.au-team.irpo; exec bash
+HQ-CLI
+hostnamectl set-hostname hq-cli.au-team.irpo; exec bash
+BR-SRV
+hostnamectl set-hostname br-srv.au-team.irpo; exec bash
+
 Настройка ISP
+http://каб-220.рф/ru/demo-2025/modul-1/modul-1-1
 
 network:
   version: 2
@@ -65,3 +81,92 @@ network:
       addresses:
         - 192.168.200.2/27
       gateway4: 192.168.200.1
+
+Применение конфигураций:
+sudo netplan try
+sudo netplan apply
+
+Включение пересылки IP‑пакетов (IP forwarding):
+sudo nano /etc/sysctl.conf
+net.ipv4.ip_forward=1
+sudo sysctl -p
+
+Настройка NAT с использованием iptables
+Очистите текущие правила iptables (чтобы избежать конфликтов):
+sudo iptables -F
+sudo iptables -t nat -F
+
+Добавьте правило маскарадинга (NAT) для ISP eth0:
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+Проверка правил:
+sudo iptables -t nat -L -v
+sudo iptables -L -v
+
+Сохранение правил iptables
+sudo apt install iptables-persistent -y
+
+#Сохраните текущие правила:
+sudo iptables-save | sudo tee /etc/iptables/rules.v4
+#Проверьте, что правила загружаются при старте системы:
+sudo systemctl enable netfilter-persistent
+sudo systemctl start netfilter-persisten
+
+Адресация сетевых интерфейсов
+ip -c --br a
+
+Создание пользователя sshuser на серверах HQ-SRV и BR-SRV
+useradd sshuser -u 1010 -U
+passwd sshuser
+P@ssw0rd
+sudo usermod -aG sudo sshuser
+sudo visudo
+sshuser ALL=(ALL) NOPASSWD: ALL
+
+Создание пользователя net_admin на маршрутизаторах HQ-RTR и BR-RTR:
+sudo useradd net_admin -U
+sudo passwd net_admin
+P@$$word
+sudo usermod -aG sudo net_admin
+sudo visudo
+net_admin ALL=(ALL) NOPASSWD: ALL
+
+
+
+
+
+
+
+
+
+Настройка GRE-туннеля на HQ-RTR
+sudo ip tunnel add tun1 mode gre local 172.16.4.2 remote 172.16.5.2 ttl 64
+sudo ip addr add 10.10.0.1/30 dev tun1
+sudo ip link set tun1 up
+
+Настройка GRE-туннеля на BR-RTR
+sudo ip tunnel add tun1 mode gre local 172.16.5.2 remote 172.16.4.2 ttl 64
+sudo ip addr add 10.10.0.2/30 dev tun1
+sudo ip link set tun1 up
+
+4. Проверка работы туннеля
+ip -c a show tun1
+ping -I tun1 10.10.0.2
+ping -I tun1 10.10.0.1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
