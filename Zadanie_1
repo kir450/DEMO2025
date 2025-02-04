@@ -135,6 +135,196 @@ net_admin ALL=(ALL) NOPASSWD: ALL
 
 
 
+1. Установка Open vSwitch
+Обновите пакеты и установите Open vSwitch и соответствующий пакет для NetworkManager:
+
+bash
+Copy
+Edit
+sudo apt update
+sudo apt install openvswitch-switch network-manager-ovs -y
+Запустите и добавьте в автозагрузку сервис Open vSwitch (на Ubuntu служба называется openvswitch-switch):
+
+bash
+Copy
+Edit
+sudo systemctl enable --now openvswitch-switch
+2. Создание виртуального коммутатора (моста)
+Создайте мост (виртуальный коммутатор) с именем hq-sw:
+
+bash
+Copy
+Edit
+sudo ovs-vsctl add-br hq-sw
+3. Добавление физических портов с назначением VLAN
+Добавьте физические интерфейсы, подключенные к HQ-RTR, в мост hq-sw с назначением меток VLAN:
+
+Интерфейс, подключённый к HQ-SRV (например, ens19) – VLAN 100:
+
+bash
+Copy
+Edit
+sudo ovs-vsctl add-port hq-sw ens19 tag=100
+Интерфейс, подключённый к HQ-CLI (например, ens20) – VLAN 200:
+
+bash
+Copy
+Edit
+sudo ovs-vsctl add-port hq-sw ens20 tag=200
+Интерфейс для управления (например, ens21) – VLAN 999:
+
+bash
+Copy
+Edit
+sudo ovs-vsctl add-port hq-sw ens21 tag=999
+4. Создание внутренних (internal) портов для VLAN
+Чтобы на HQ-RTR можно было назначать IP-адреса для каждой подсети, создадим внутренние интерфейсы на мосту:
+
+Внутренний порт для VLAN 100:
+
+bash
+Copy
+Edit
+sudo ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
+Внутренний порт для VLAN 200:
+
+bash
+Copy
+Edit
+sudo ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
+Внутренний порт для VLAN 999:
+
+bash
+Copy
+Edit
+sudo ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
+5. Перезапуск сервисов и включение моста
+Перезапустите Open vSwitch и NetworkManager для применения изменений:
+
+bash
+Copy
+Edit
+sudo systemctl restart openvswitch-switch
+sudo systemctl restart NetworkManager
+Поднимите интерфейс моста:
+
+bash
+Copy
+Edit
+sudo ip link set hq-sw up
+6. Назначение IP-адресов внутренним интерфейсам
+Назначьте IP-адреса согласно заданию:
+
+Для VLAN 100 (подсеть HQ-RTR ↔ HQ-SRV, 192.168.100.0/26):
+
+bash
+Copy
+Edit
+sudo ip addr add 192.168.100.1/26 dev vlan100
+Для VLAN 200 (подсеть HQ-RTR ↔ HQ-CLI, 192.168.100.64/28):
+
+bash
+Copy
+Edit
+sudo ip addr add 192.168.100.65/28 dev vlan200
+Для VLAN 999 (подсеть управления, 192.168.100.80/29):
+
+bash
+Copy
+Edit
+sudo ip addr add 192.168.100.81/29 dev vlan999
+7. Проверка конфигурации
+Убедитесь, что мост и внутренние интерфейсы работают корректно:
+
+bash
+Copy
+Edit
+ip a
+Проверьте, что:
+
+Мост hq-sw находится в состоянии UP.
+Виртуальные интерфейсы vlan100, vlan200 и vlan999 созданы и имеют назначенные IP-адреса.
+Итог
+После выполнения приведённых шагов:
+
+Физические интерфейсы ens19, ens20, ens21 добавлены в мост с назначенными тегами VLAN 100, 200 и 999.
+Созданы внутренние интерфейсы (vlan100, vlan200, vlan999) для доступа к соответствующим VLAN.
+Назначены IP-адреса для управления и взаимодействия с офисными подсетями HQ.
+Open vSwitch и NetworkManager перезапущены для применения конфигурации.
+Эта конфигурация соответствует заданию и обеспечивает корректное разделение трафика по VLAN для сервера HQ-SRV, клиента HQ-CLI и управления.
+
+
+
+
+
+
+
+You said:
+root@br-rtr:~# sudo apt install openvswitch-switch network-manager-ovs -y
+sudo: unable to resolve host br-rtr.au-team.irpo: Temporary failure in name resolution
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+E: Unable to locate package network-manager-ovs
+root@br-rtr:~#
+
+ChatGPT said:
+ChatGPT
+При установке Open vSwitch на Ubuntu 20.04 вы столкнулись с ошибкой:
+
+vbnet
+Copy
+Edit
+E: Unable to locate package network-manager-ovs
+Это связано с отсутствием пакета network-manager-ovs в репозиториях Ubuntu 20.04.
+
+Решение:
+
+Установка Open vSwitch:
+
+Для установки Open vSwitch используйте следующий пакет:
+
+bash
+Copy
+Edit
+sudo apt update
+sudo apt install openvswitch-switch -y
+Этот пакет содержит необходимые утилиты для работы с Open vSwitch.
+
+Установка NetworkManager с поддержкой Open vSwitch:
+
+Вместо пакета network-manager-ovs используйте network-manager с поддержкой Open vSwitch:
+
+bash
+Copy
+Edit
+sudo apt install network-manager-openvswitch -y
+Этот пакет предоставляет интеграцию NetworkManager с Open vSwitch.
+
+Перезапуск NetworkManager:
+
+После установки перезапустите службу NetworkManager:
+
+bash
+Copy
+Edit
+sudo systemctl restart NetworkManager
+Проверка установки:
+
+Убедитесь, что Open vSwitch установлен и работает:
+
+bash
+Copy
+Edit
+sudo systemctl status openvswitch-switch
+Если служба не запущена, запустите её:
+
+bash
+Copy
+Edit
+sudo systemctl start openvswitch-switch
+
+
 
 
 
