@@ -1,0 +1,67 @@
+Настройка ISP
+
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      dhcp4: yes
+    eth1:
+      addresses:
+        - 172.16.4.1/28
+    eth2:
+      addresses:
+        - 172.16.5.1/28
+
+Настройка HQ-RTR
+
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      addresses:
+        - 172.16.4.2/28
+      gateway4: 172.16.4.1
+      nameservers:
+        addresses:
+          - 77.88.8.8
+
+Настройка HQ-SRV
+
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      addresses:
+        - 192.168.100.2/26
+      gateway4: 192.168.100.1
+
+Настройка BR-RTR
+
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      addresses:
+        - 172.16.5.2/28
+      gateway4: 172.16.5.1
+      nameservers:
+        addresses:
+          - 77.88.8.8
+    eth1:
+      addresses:
+        - 192.168.200.1/27
+
+Настройка BR-SRV
+
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      addresses:
+        - 192.168.200.2/27
+      gateway4: 192.168.200.1
