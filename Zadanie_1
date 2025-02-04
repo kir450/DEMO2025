@@ -135,16 +135,6 @@ net_admin ALL=(ALL) NOPASSWD: ALL
 
 
 
-Reasoned for 10 seconds
-Setting up a virtual switch
-
-I’m piecing together HQ-RTR to establish a virtual switch using Open vSwitch on Ubuntu 20.04. This avoids installing NetworkManager, focusing on configuring VLANs for HQ-SRV, HQ-CLI, and management.
-
-Detailing the process
-
-I’m documenting steps to install Open vSwitch, configure VLANs, and troubleshoot, including updating /etc/hosts and verifying IP addresses. This guide will ensure a comprehensive setup.
-
-Ниже представлена полная инструкция по настройке виртуального коммутатора на HQ-RTR (Ubuntu 20.04) с использованием Open vSwitch. В данной инструкции пропускается установка пакета интеграции NetworkManager с OVS, поэтому управление мостами и VLAN производится вручную через утилиту ovs-vsctl.
 
 Примечание: Если при выполнении команд появляется ошибка «sudo: unable to resolve host br-rtr.au-team.irpo: Temporary failure in name resolution», откройте файл /etc/hosts и убедитесь, что там есть строка, связывающая IP-адрес с именем хоста, например:
 
@@ -152,6 +142,8 @@ bash
 Copy
 Edit
 127.0.1.1   br-rtr.au-team.irpo br-rtr
+
+
 1. Установка Open vSwitch
 Обновите список пакетов:
 
