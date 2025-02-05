@@ -456,6 +456,102 @@ ping -I tun1 10.10.0.1
 
 
 
+Установка DHCP-сервера
+Обновите список пакетов и установите isc-dhcp-server:
+
+bash
+Copy
+Edit
+sudo apt update
+sudo apt install isc-dhcp-server -y
+Проверьте, что пакет установлен корректно:
+
+bash
+Copy
+Edit
+dpkg -l | grep isc-dhcp-server
+2. Настройка файла конфигурации DHCP
+Откройте файл конфигурации:
+
+bash
+Copy
+Edit
+sudo nano /etc/dhcp/dhcpd.conf
+Измените (или добавьте) следующий блок для нужной подсети. В данном примере используется подсеть 192.168.100.64/28 (маска 255.255.255.240), где:
+
+Диапазон выдачи – от 192.168.100.66 до 192.168.100.78 (адрес 192.168.100.1 – адрес маршрутизатора HQ-RTR – исключён из пула)
+DNS-сервер – адрес сервера HQ-SRV (192.168.100.2)
+Шлюз по умолчанию – адрес маршрутизатора HQ-RTR (192.168.100.1)
+DNS-суффикс – "au-team.irpo"
+Время аренды: default lease – 600 сек, max lease – 7200 сек
+Пример содержимого:
+
+dhcp
+Copy
+Edit
+subnet 192.168.100.64 netmask 255.255.255.240 {
+  range 192.168.100.66 192.168.100.78;
+  option domain-name-servers 192.168.100.2;
+  option domain-name "au-team.irpo";
+  option routers 192.168.100.1;
+  default-lease-time 600;
+  max-lease-time 7200;
+}
+Сохраните файл (Ctrl+O, Enter) и выйдите (Ctrl+X).
+
+3. Указание интерфейса для DHCP-сервера
+Откройте файл /etc/default/isc-dhcp-server:
+
+bash
+Copy
+Edit
+sudo nano /etc/default/isc-dhcp-server
+Найдите строку, начинающуюся с INTERFACESv4 и укажите имя сетевого интерфейса, через который будет работать DHCP-сервер (например, если это eth0):
+
+bash
+Copy
+Edit
+INTERFACESv4="eth0"
+Если у вас используется другой интерфейс, замените eth0 на соответствующее имя.
+
+Сохраните изменения и выйдите из редактора.
+
+4. Запуск и автозапуск службы DHCP
+Запустите службу:
+
+bash
+Copy
+Edit
+sudo systemctl enable --now isc-dhcp-server
+Проверьте статус службы:
+
+bash
+Copy
+Edit
+sudo systemctl status isc-dhcp-server
+В выводе должно быть указано, что служба запущена и работает без ошибок.
+
+5. Проверка работы DHCP-сервера
+На клиентской машине (например, HQ-CLI) перезагрузите или обновите IP-конфигурацию (например, командой:
+
+bash
+Copy
+Edit
+sudo dhclient -r && sudo dhclient
+или перезагрузкой интерфейса).
+
+Проверьте, что клиент получил IP-адрес из заданного диапазона (например, с помощью команды:
+
+bash
+Copy
+Edit
+ip a
+или
+
+bash
+Copy
+Edit
+ifconfig
 
 
 
