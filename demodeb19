@@ -75,3 +75,286 @@ net_admin ALL=(ALL) NOPASSWD: ALL
 
 
 
+Ниже приведена полная подробная инструкция по настройке виртуального коммутатора на HQ-RTR (Debian 10) с использованием Open vSwitch, с сохранением настроек после перезагрузки, а также описаны шаги по настройке DHCP для клиентов (HQ‑CLI) и статической адресации для сервера (HQ‑SRV). При этом в конфигурации используются реальные имена интерфейсов из таблицы:
+
+На HQ-RTR для внутренней (офисной) сети используются интерфейсы ens4 (для VLAN 100), ens5 (для VLAN 200) и ens6 (для VLAN 999).
+WAN‑интерфейс HQ‑RTR остаётся ens3 и не участвует в виртуальном коммутаторе.
+В итоге сервер HQ‑SRV получит IP 192.168.100.2/26 с шлюзом 192.168.100.1 (VLAN 100), а клиент HQ‑CLI – адрес по DHCP из подсети VLAN 200 (192.168.100.64/28, где шлюз 192.168.100.65).
+
+I. Настройка HQ-RTR (Debian 10) с Open vSwitch
+1. Установка необходимых пакетов
+Обновите списки пакетов и установите Open vSwitch, интеграцию с NetworkManager (если требуется) и DHCP-сервер (для раздачи адресов клиентам):
+
+bash
+Копировать
+Редактировать
+sudo apt update
+sudo apt install -y openvswitch-switch network-manager-ovs isc-dhcp-server
+Примечание: Пакеты из репозитория Debian 10 подходят для вашей ОС.
+
+2. Запуск и автозапуск службы Open vSwitch
+Включите и запустите службу, чтобы она стартовала сразу и автоматически при загрузке:
+
+bash
+Копировать
+Редактировать
+sudo systemctl enable --now openvswitch-switch
+3. Создание виртуального коммутатора (моста) и настройка VLAN
+Мы создадим виртуальный мост hq-sw и настроим следующие порты:
+
+Физические интерфейсы HQ-RTR:
+ens4 – с тегом VLAN 100 (для подключения сервера HQ‑SRV)
+ens5 – с тегом VLAN 200 (для подключения клиента HQ‑CLI)
+ens6 – с тегом VLAN 999 (подсеть управления)
+«Внутренние» (internal) порты для назначения IP-адресов на HQ-RTR:
+vlan100 – для VLAN 100 (IP 192.168.100.1/26)
+vlan200 – для VLAN 200 (IP 192.168.100.65/28)
+vlan999 – для VLAN 999 (IP 192.168.100.81/29)
+3.1. Создание моста и добавление физических портов
+Создаём мост:
+
+bash
+Копировать
+Редактировать
+sudo ovs-vsctl add-br hq-sw
+Добавляем физические интерфейсы с VLAN-тегированием:
+
+bash
+Копировать
+Редактировать
+sudo ovs-vsctl add-port hq-sw ens4 tag=100
+sudo ovs-vsctl add-port hq-sw ens5 tag=200
+sudo ovs-vsctl add-port hq-sw ens6 tag=999
+3.2. Добавление внутренних портов (internal) для управления VLAN
+Эти виртуальные интерфейсы позволят HQ-RTR участвовать в каждой из VLAN и принимать IP-адреса.
+
+bash
+Копировать
+Редактировать
+sudo ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
+sudo ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
+sudo ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
+3.3. Включение моста и внутренних интерфейсов
+bash
+Копировать
+Редактировать
+sudo ip link set hq-sw up
+sudo ip link set vlan100 up
+sudo ip link set vlan200 up
+sudo ip link set vlan999 up
+3.4. Назначение IP-адресов внутренним портам
+Для VLAN 100 (связь с сервером HQ‑SRV):
+
+bash
+Копировать
+Редактировать
+sudo ip addr add 192.168.100.1/26 dev vlan100
+Для VLAN 200 (шлюз для клиентов HQ‑CLI):
+
+bash
+Копировать
+Редактировать
+sudo ip addr add 192.168.100.65/28 dev vlan200
+Для VLAN 999 (управление):
+
+bash
+Копировать
+Редактировать
+sudo ip addr add 192.168.100.81/29 dev vlan999
+4. Автоматизация сохранения настроек Open vSwitch после перезагрузки
+При перезагрузке конфигурация внутренних настроек (IP-адресация, включение интерфейсов) может не сохраняться автоматически. Для автоматизации создадим скрипт и systemd‑сервис.
+
+4.1. Скрипт восстановления конфигурации
+Создайте файл /usr/local/sbin/ovs-persistent.sh:
+
+bash
+Копировать
+Редактировать
+sudo nano /usr/local/sbin/ovs-persistent.sh
+Вставьте следующий код:
+
+bash
+Копировать
+Редактировать
+#!/bin/bash
+# Если мост уже существует – удаляем его для чистой конфигурации
+ovs-vsctl --if-exists del-br hq-sw
+ovs-vsctl add-br hq-sw
+
+# Добавляем физические интерфейсы с нужными тегами
+ovs-vsctl add-port hq-sw ens4 tag=100
+ovs-vsctl add-port hq-sw ens5 tag=200
+ovs-vsctl add-port hq-sw ens6 tag=999
+
+# Добавляем внутренние порты с тегами VLAN
+ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
+ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
+ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
+
+# Включаем мост и внутренние интерфейсы
+ip link set hq-sw up
+ip link set vlan100 up
+ip link set vlan200 up
+ip link set vlan999 up
+
+# Назначаем IP-адреса внутренним интерфейсам
+ip addr add 192.168.100.1/26 dev vlan100 || true
+ip addr add 192.168.100.65/28 dev vlan200 || true
+ip addr add 192.168.100.81/29 dev vlan999 || true
+Сохраните файл и сделайте его исполняемым:
+
+bash
+Копировать
+Редактировать
+sudo chmod +x /usr/local/sbin/ovs-persistent.sh
+4.2. Создание systemd‑сервиса
+Создайте файл сервиса /etc/systemd/system/ovs-persistent.service:
+
+bash
+Копировать
+Редактировать
+sudo nano /etc/systemd/system/ovs-persistent.service
+Вставьте следующее содержимое:
+
+ini
+Копировать
+Редактировать
+[Unit]
+Description=Restore Open vSwitch configuration on boot
+After=openvswitch-switch.service
+Requires=openvswitch-switch.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ovs-persistent.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+Сохраните файл, затем выполните:
+
+bash
+Копировать
+Редактировать
+sudo systemctl daemon-reload
+sudo systemctl enable ovs-persistent.service
+sudo systemctl start ovs-persistent.service
+Теперь при каждой загрузке системы скрипт будет автоматически применять нужную конфигурацию.
+
+5. Настройка DHCP-сервера для VLAN 200 (для HQ‑CLI)
+Клиент HQ‑CLI должен получать IP-адреса по DHCP из подсети VLAN 200.
+
+5.1. Настройка интерфейса для DHCP
+Отредактируйте файл /etc/default/isc-dhcp-server и укажите, что сервер будет слушать на интерфейсе внутреннего порта для VLAN 200 (то есть на vlan200):
+
+bash
+Копировать
+Редактировать
+sudo nano /etc/default/isc-dhcp-server
+Измените строку:
+
+plaintext
+Копировать
+Редактировать
+INTERFACES="vlan200"
+5.2. Конфигурация файла dhcpd.conf
+Отредактируйте файл /etc/dhcp/dhcpd.conf:
+
+bash
+Копировать
+Редактировать
+sudo nano /etc/dhcp/dhcpd.conf
+Добавьте или измените секцию для подсети VLAN 200 (подсеть 192.168.100.64/28):
+
+conf
+Копировать
+Редактировать
+subnet 192.168.100.64 netmask 255.255.255.240 {
+    range 192.168.100.66 192.168.100.78;
+    option routers 192.168.100.65;
+    option subnet-mask 255.255.255.240;
+    option domain-name-servers 8.8.8.8, 8.8.4.4;
+    option broadcast-address 192.168.100.79;
+    default-lease-time 600;
+    max-lease-time 7200;
+}
+Здесь:
+
+192.168.100.65/28 – IP внутреннего порта vlan200 (шлюз для клиентов).
+Диапазон адресов: с 192.168.100.66 до 192.168.100.78.
+5.3. Перезапуск DHCP-сервера
+bash
+Копировать
+Редактировать
+sudo systemctl restart isc-dhcp-server
+sudo systemctl enable isc-dhcp-server
+II. Настройка клиентов и сервера HQ
+A. Настройка HQ‑CLI (клиент)
+На клиентском устройстве HQ‑CLI необходимо настроить получение адреса по DHCP.
+
+Если используется NetworkManager, выполните:
+
+bash
+Копировать
+Редактировать
+sudo nmtui
+– Выберите нужное подключение, установите метод IPv4 на «Automatic (DHCP)» и сохраните изменения.
+
+После перезагрузки сети устройство получит IP из диапазона 192.168.100.66–192.168.100.78, а шлюз будет 192.168.100.65 (интерфейс vlan200 на HQ-RTR).
+
+B. Настройка HQ‑SRV (сервер)
+На сервере HQ‑SRV необходимо настроить статическую IP‑адресацию, чтобы сервер находился в подсети VLAN 100.
+
+Задайте статический IP 192.168.100.2/26 для интерфейса (например, если используется NetworkManager, через nmtui или соответствующий конфигурационный файл). Пример для ручной настройки (если используется файл /etc/network/interfaces или systemd-networkd):
+
+Если через /etc/network/interfaces (пример):
+
+plaintext
+Копировать
+Редактировать
+auto ens3
+iface ens3 inet static
+    address 192.168.100.2
+    netmask 255.255.255.192
+    gateway 192.168.100.1
+    dns-nameservers 8.8.8.8 8.8.4.4
+Или через nmtui:
+
+Запустите команду sudo nmtui
+Выберите «Edit a connection»
+Выберите соответствующий интерфейс (например, ens3)
+Установите метод IPv4 на «Manual»
+Введите IP‑адрес 192.168.100.2, маску 255.255.255.192, шлюз 192.168.100.1 и DNS-сервера
+Сохраните настройки и перезагрузите сетевой сервис
+Убедитесь, что настройки применены, проверив:
+
+bash
+Копировать
+Редактировать
+ip addr show
+ip route
+ping 192.168.100.1
+Таким образом, HQ‑SRV будет находиться в подсети VLAN 100 с IP 192.168.100.2, а его шлюзом станет HQ‑RTR (интерфейс vlan100 с IP 192.168.100.1).
+
+III. Итоговая схема и проверка работы
+HQ‑RTR на Debian 10 с Open vSwitch создаёт виртуальный мост hq-sw.
+Физические интерфейсы ens4, ens5, ens6 добавлены в мост с тегами VLAN 100, 200 и 999 соответственно.
+Внутренние интерфейсы vlan100, vlan200 и vlan999 получают IP-адреса 192.168.100.1/26, 192.168.100.65/28 и 192.168.100.81/29 соответственно.
+Настройка сохраняется после перезагрузки с помощью созданного systemd‑сервиса.
+DHCP‑сервер (isc-dhcp-server) на HQ‑RTR раздаёт адреса клиентам в VLAN 200 (подсеть 192.168.100.64/28).
+HQ‑CLI настроен на получение IP по DHCP, и получает адрес из диапазона 192.168.100.66–192.168.100.78 с шлюзом 192.168.100.65.
+HQ‑SRV настроен статически с IP 192.168.100.2/26, шлюзом 192.168.100.1.
+Проверьте работу системы:
+
+На HQ‑RTR:
+bash
+Копировать
+Редактировать
+sudo ovs-vsctl show
+sudo ip addr show
+sudo iptables -L -n -v   # если используются firewall-правила
+На HQ‑CLI: убедитесь, что получен IP из нужного диапазона и можно пинговать шлюз.
+На HQ‑SRV: проверьте, что сервер доступен и настроен с правильной статической конфигурацией.
+
+
+
