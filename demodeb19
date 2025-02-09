@@ -367,6 +367,14 @@ ip route
 ping 192.168.100.1
 Таким образом, сервер HQ‑SRV будет иметь статический IP 192.168.100.2/26, а шлюз – 192.168.100.1 (интерфейс vlan100 на HQ-RTR).
 
+1. Проверка NAT и IP‑форвардинга
+1.1. Включён ли IP‑форвардинг на роутере?
+nano /etc/sysctl.conf
+net.ipv4.ip_forward = 1
+
+Настроено ли правило NAT (MASQUERADE) для внешнего интерфейса?
+sudo iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
+
 
 
 
