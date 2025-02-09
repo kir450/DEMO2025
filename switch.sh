@@ -5,13 +5,20 @@ set -e
 
 echo "=== Обновление списков пакетов и установка необходимых пакетов ==="
 apt update
-apt install -y openvswitch-switch isc-dhcp-server iptables-persistent
+# Устанавливаем openvswitch-switch и isc-dhcp-server (iptables-persistent установим позже)
+apt install -y openvswitch-switch isc-dhcp-server
 
-echo "=== Проверка имени хоста и исправление /etc/hosts (если необходимо) ==="
-HOSTNAME=$(hostname)
-if ! grep -q "$HOSTNAME" /etc/hosts; then
-    echo "127.0.1.1 $HOSTNAME" >> /etc/hosts
-    echo "Добавлена запись в /etc/hosts: 127.0.1.1 $HOSTNAME"
+echo "=== Исправление /etc/hosts ==="
+# Если строка '127.0.1.1 debian' найдена, заменяем её на '127.0.1.1 hq-rtr.au-team.irpo',
+# иначе добавляем нужную запись.
+if grep -q "127\.0\.1\.1[[:space:]]\+debian" /etc/hosts; then
+    sed -i 's/127\.0\.1\.1[[:space:]]\+debian/127.0.1.1 hq-rtr.au-team.irpo/' /etc/hosts
+    echo "В /etc/hosts заменена строка '127.0.1.1 debian' на '127.0.1.1 hq-rtr.au-team.irpo'."
+else
+    if ! grep -q "127.0.1.1[[:space:]]\+hq-rtr.au-team.irpo" /etc/hosts; then
+        echo "127.0.1.1 hq-rtr.au-team.irpo" >> /etc/hosts
+        echo "Добавлена строка '127.0.1.1 hq-rtr.au-team.irpo' в /etc/hosts."
+    fi
 fi
 
 echo "=== Включение и запуск службы Open vSwitch ==="
@@ -121,6 +128,9 @@ systemctl restart isc-dhcp-server
 systemctl enable isc-dhcp-server
 
 echo "=== Включение IP-форвардинга ==="
+# Удаляем символ '#' если он присутствует перед net.ipv4.ip_forward=1
+sed -i 's/^#\(net\.ipv4\.ip_forward=1\)/\1/' /etc/sysctl.conf
+# Если строки net.ipv4.ip_forward=1 нет, добавляем её
 if ! grep -q "^net.ipv4.ip_forward=1" /etc/sysctl.conf; then
     echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
 fi
@@ -129,6 +139,8 @@ sysctl -p
 echo "=== Настройка NAT (MASQUERADE) для внешнего интерфейса ens3 ==="
 iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
 
-echo "=== Установка iptables-persistent завершена ==="
-echo "Настройка завершена."
+echo "=== Установка iptables-persistent ==="
+apt install -y iptables-persistent
+
+echo "=== Настройка завершена ==="
 echo "Не забудьте настроить HQ-SRV с статическим IP 192.168.100.2/26 и шлюзом 192.168.100.1."
