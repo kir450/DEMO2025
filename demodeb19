@@ -31,12 +31,76 @@ BR-RTR         | ens3      | 172.16.5.2/28     | 172.16.5.1        | ISP_BR-RTR
 ============================================================================================
 BR-SRV         | ens3      | 192.168.200.2/27  | 192.168.200.1     | BR-RTR_BR-SRV         
 
-Маршрутизация транзитных IP-пакетов
+
+
+
+1. Изменение файла /etc/hostname
+sudo nano /etc/hostname
+
+ISP:
+isp.au-team.irpo
+HQ-RTR:
+hq-rtr.au-team.irpo
+BR-RTR:
+br-rtr.au-team.irpo
+HQ-SRV:
+hq-srv.au-team.irpo
+HQ-CLI:
+hq-cli.au-team.irpo
+BR-SRV:
+br-srv.au-team.irpo
+
+2. Изменение файла /etc/hosts
+sudo nano /etc/hosts
+
+ISP:
+127.0.1.1       isp.au-team.irpo
+HQ-RTR:
+127.0.1.1       hq-rtr.au-team.irpo
+HQ-SRV:
+127.0.1.1       hq-srv.au-team.irpo
+HQ-CLI:
+127.0.1.1       hq-cli.au-team.irpo
+BR-RTR:
+127.0.1.1       br-rtr.au-team.irpo
+BR-SRV:
+127.0.1.1       br-srv.au-team.irpo
+
+Задаем IP адреса сетевым интерфейсам согласно таблицы адресации.
+nmtui
+Настройка ISP
+Internet-ISP ens3 auto
+ISP_HQ-RTR ens4 172.16.4.1/28
+ISP_BR-RTR ens5 172.16.5.1/28
+
+Настройка HQ-RTR
+ISP_HQ-RTR ens3 172.16.4.2/28 Шлюз 172.16.4.1 Серверы DNS 77.88.8.8
+Настройка ens4, ens5, ens6 будет произведена при настройке VLAN
+
+Настройка HQ-SRV
+HQ-RTR_HQ-SRV ens3 192.168.100.2/26 Шлюз 192.168.100.1
+
+Настройка HQ-CLI
+Получает IP – адрес по DHCP
+
+Настройка BR-RTR
+ISP-BR-RTR ens3 172.16.5.2/28 Шлюз 172.16.5.1 Серверы DNS 77.88.8.8
+BR-RTR-BR-SRV ens4 192.168.200.1/27 
+
+Настройка BR-SRV
+BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
+
+Проверить результат настройки IP- адресов можно с помощью команд на выбор:
+ip a
+ip –c a
+ip –c –br a
+
+Включить пересылку пакетов между интерфейсами на ISP, HQ-RTR, BR-RTR.
 nano /etc/sysctl.conf
 net.ipv4.ip_forward=1
 sysctl -p
 
-Настройка NAT с помощью iptables
+Настройка NAT с помощью iptables на ISP, HQ-RTR, BR-RTR.
 iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
 
 Сохранение iptables‑правил
@@ -49,23 +113,22 @@ sudo iptables-save | sudo tee /etc/iptables/rules.v4
 Проверка iptables‑правил:
 sudo iptables -t nat -L -n -v
 
-Создание локальных учетных записей на серверах (HQ-SRV и BR-SRV)
+
+
+Создание локальных учетных записей на серверах HQ-SRV и BR-SRV
 sudo useradd sshuser -u 1010 -U
 sudo passwd sshuser
+P@ssw0rd
 
 Предоставление прав sudo без запроса пароля
 sudo usermod -aG sudo sshuser
 sudo visudo
 sshuser ALL=(ALL) NOPASSWD: ALL
 
-Проверка
-Выполните вход под пользователем sshuser и протестируйте выполнение команд с sudo, например:
-sudo -i
-Если вход в сессию root происходит без запроса пароля, настройка выполнена корректно.
-
 Создание пользователя net_admin на маршрутизаторах HQ‑RTR и BR‑RTR
 sudo useradd net_admin -U
 sudo passwd net_admin
+P@$$word
 
 Предоставление привилегий sudo без запроса пароля
 sudo usermod -aG sudo net_admin
@@ -74,138 +137,45 @@ net_admin ALL=(ALL) NOPASSWD: ALL
 
 
 
-I. Настройка HQ-RTR (Debian 10) с Open vSwitch
+I. Настройка OpenvSwitch на HQ-RTR
+
 1. Установка необходимых пакетов
 Обновите списки пакетов и установите Open vSwitch и DHCP-сервер (isc-dhcp-server):
-
-bash
-Копировать
-Редактировать
 sudo apt update
 sudo apt install -y openvswitch-switch isc-dhcp-server
-Примечание: Пакет network-manager-ovs не используется, так как он недоступен в Debian 10.
 
 2. Запуск и автозапуск службы Open vSwitch
-Включите и запустите службу, чтобы она стартовала сразу и автоматически при загрузке:
-
-bash
-Копировать
-Редактировать
 sudo systemctl enable --now openvswitch-switch
+
 3. Создание виртуального коммутатора (моста) и настройка VLAN
-Мы создадим виртуальный мост hq-sw и настроим следующие порты:
-
-Физические интерфейсы HQ-RTR:
-ens4 – для подключения сервера HQ‑SRV (VLAN 100)
-ens5 – для подключения клиента HQ‑CLI (VLAN 200)
-ens6 – для управления (VLAN 999)
-«Внутренние» (internal) порты для назначения IP-адресов на HQ-RTR:
-vlan100 – для VLAN 100 (IP 192.168.100.1/26)
-vlan200 – для VLAN 200 (IP 192.168.100.65/28)
-vlan999 – для VLAN 999 (IP 192.168.100.81/29)
-3.1. Создание моста и добавление физических портов
-Создаём мост:
-
-bash
-Копировать
-Редактировать
 sudo ovs-vsctl add-br hq-sw
+
 Добавляем физические интерфейсы с VLAN-тегированием:
-
-
-sudo: unable to resolve host hq-rtr.au-team.irpo: Name or service not known
-Рассуждала для 6 секунд
-Эта ошибка означает, что система не может сопоставить имя хоста «hq-rtr.au-team.irpo» с IP-адресом. Обычно это происходит, если в файле /etc/hosts отсутствует соответствующая запись.
-
-Чтобы исправить проблему, выполните следующие шаги:
-
-Проверьте, какое имя хоста установлено в системе. Выполните команду:
-
-bash
-Копировать
-Редактировать
-hostname
-Убедитесь, что вывод соответствует «hq-rtr.au-team.irpo».
-
-Отредактируйте файл /etc/hosts:
-
-bash
-Копировать
-Редактировать
-sudo nano /etc/hosts
-Добавьте строку, сопоставляющую ваше имя хоста с IP-адресом. Обычно для локальной машины используют адрес 127.0.1.1 или 127.0.0.1. Например, можно добавить:
-
-Копировать
-Редактировать
-127.0.1.1 hq-rtr.au-team.irpo
-
-
-
-
-
-
-
-
-
-
-
-bash
-Копировать
-Редактировать
 sudo ovs-vsctl add-port hq-sw ens4 tag=100
 sudo ovs-vsctl add-port hq-sw ens5 tag=200
 sudo ovs-vsctl add-port hq-sw ens6 tag=999
-3.2. Добавление внутренних портов (internal) для управления VLAN
-Эти виртуальные интерфейсы позволят HQ-RTR участвовать в каждой из VLAN и принимать IP-адреса.
 
-bash
-Копировать
-Редактировать
+3.2. Добавление внутренних портов (internal) для управления VLAN
 sudo ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
 sudo ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
 sudo ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
+
 3.3. Включение моста и внутренних интерфейсов
-bash
-Копировать
-Редактировать
 sudo ip link set hq-sw up
 sudo ip link set vlan100 up
 sudo ip link set vlan200 up
 sudo ip link set vlan999 up
+
 3.4. Назначение IP-адресов внутренним портам
-Для VLAN 100 (связь с сервером HQ‑SRV):
-
-bash
-Копировать
-Редактировать
 sudo ip addr add 192.168.100.1/26 dev vlan100
-Для VLAN 200 (шлюз для клиентов HQ‑CLI):
-
-bash
-Копировать
-Редактировать
 sudo ip addr add 192.168.100.65/28 dev vlan200
-Для VLAN 999 (управление):
-
-bash
-Копировать
-Редактировать
 sudo ip addr add 192.168.100.81/29 dev vlan999
+
 4. Автоматизация сохранения настроек Open vSwitch после перезагрузки
-Чтобы восстановить настройки после перезагрузки, создадим скрипт и systemd‑сервис.
-
 4.1. Скрипт восстановления конфигурации
-Создайте файл /usr/local/sbin/ovs-persistent.sh:
-
-bash
-Копировать
-Редактировать
 sudo nano /usr/local/sbin/ovs-persistent.sh
 Вставьте следующий код:
 
-bash
-Копировать
-Редактировать
 #!/bin/bash
 # Удаляем существующий мост, если он есть, для чистой конфигурации
 ovs-vsctl --if-exists del-br hq-sw
@@ -231,24 +201,14 @@ ip link set vlan999 up
 ip addr add 192.168.100.1/26 dev vlan100 || true
 ip addr add 192.168.100.65/28 dev vlan200 || true
 ip addr add 192.168.100.81/29 dev vlan999 || true
+
 Сохраните файл и сделайте его исполняемым:
-
-bash
-Копировать
-Редактировать
 sudo chmod +x /usr/local/sbin/ovs-persistent.sh
-4.2. Создание systemd‑сервиса
-Создайте файл сервиса /etc/systemd/system/ovs-persistent.service:
 
-bash
-Копировать
-Редактировать
+4.2. Создание systemd‑сервиса
 sudo nano /etc/systemd/system/ovs-persistent.service
 Вставьте следующее содержимое:
 
-ini
-Копировать
-Редактировать
 [Unit]
 Description=Restore Open vSwitch configuration on boot
 After=openvswitch-switch.service
@@ -261,44 +221,24 @@ RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
-Сохраните файл, затем выполните:
 
-bash
-Копировать
-Редактировать
+Сохраните файл, затем выполните:
 sudo systemctl daemon-reload
 sudo systemctl enable ovs-persistent.service
 sudo systemctl start ovs-persistent.service
+
 Теперь при каждой загрузке системы скрипт автоматически восстановит нужную конфигурацию.
 
 5. Настройка DHCP-сервера для VLAN 200 (для HQ‑CLI)
 Клиент HQ‑CLI должен получать IP-адреса по DHCP из подсети VLAN 200.
 
 5.1. Указание интерфейса для DHCP
-Отредактируйте файл /etc/default/isc-dhcp-server и укажите, что сервер будет слушать на интерфейсе vlan200:
-
-bash
-Копировать
-Редактировать
 sudo nano /etc/default/isc-dhcp-server
-Измените строку:
-
-plaintext
-Копировать
-Редактировать
 INTERFACES="vlan200"
+
 5.2. Конфигурация файла dhcpd.conf
-Отредактируйте файл /etc/dhcp/dhcpd.conf:
-
-bash
-Копировать
-Редактировать
 sudo nano /etc/dhcp/dhcpd.conf
-Добавьте или измените секцию для подсети VLAN 200 (подсеть 192.168.100.64/28):
 
-conf
-Копировать
-Редактировать
 subnet 192.168.100.64 netmask 255.255.255.240 {
     range 192.168.100.66 192.168.100.78;
     option routers 192.168.100.65;
@@ -308,76 +248,91 @@ subnet 192.168.100.64 netmask 255.255.255.240 {
     default-lease-time 600;
     max-lease-time 7200;
 }
-Здесь:
 
-192.168.100.65/28 – IP внутреннего порта vlan200 (шлюз для клиентов).
-Диапазон адресов: с 192.168.100.66 до 192.168.100.78.
 5.3. Перезапуск DHCP-сервера
-bash
-Копировать
-Редактировать
 sudo systemctl restart isc-dhcp-server
 sudo systemctl enable isc-dhcp-server
-II. Настройка клиентов и сервера HQ
-A. Настройка HQ‑CLI (клиент)
-На клиентском устройстве HQ‑CLI необходимо настроить получение адреса по DHCP.
-
-Если используется NetworkManager, выполните:
-
-bash
-Копировать
-Редактировать
-sudo nmtui
-Выберите «Edit a connection».
-Выберите нужное подключение.
-Установите метод IPv4 на «Automatic (DHCP)».
-Сохраните изменения.
-После перезагрузки сети устройство получит IP из диапазона 192.168.100.66–192.168.100.78, а шлюз будет 192.168.100.65 (интерфейс vlan200 на HQ-RTR).
-
-B. Настройка HQ‑SRV (сервер)
-На сервере HQ‑SRV необходимо настроить статическую IP‑адресацию, чтобы сервер находился в подсети VLAN 100.
-
-Например, если используется NetworkManager, выполните:
-
-Запустите:
-
-bash
-Копировать
-Редактировать
-sudo nmtui
-Выберите «Edit a connection» для нужного интерфейса (например, ens3).
-
-Установите метод IPv4 на «Manual».
-
-Введите:
-
-IP‑адрес: 192.168.100.2
-Маска: 255.255.255.192
-Шлюз: 192.168.100.1
-DNS-сервера: 8.8.8.8, 8.8.4.4
-Сохраните настройки и перезапустите сетевой сервис (или перезагрузите систему).
-
-Проверьте конфигурацию:
-
-bash
-Копировать
-Редактировать
-ip addr show
-ip route
-ping 192.168.100.1
-Таким образом, сервер HQ‑SRV будет иметь статический IP 192.168.100.2/26, а шлюз – 192.168.100.1 (интерфейс vlan100 на HQ-RTR).
-
-1. Проверка NAT и IP‑форвардинга
-1.1. Включён ли IP‑форвардинг на роутере?
-nano /etc/sysctl.conf
-net.ipv4.ip_forward = 1
-sysctl -p
-
-Настроено ли правило NAT (MASQUERADE) для внешнего интерфейса?
-sudo iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
-
-sudo apt install iptables-persistent -y
 
 
+
+
+
+1. Настройка SSH-сервера
+1.1. Редактирование файла конфигурации SSH
+sudo nano /etc/ssh/sshd_config
+Port 2024
+
+Разрешение подключения только для пользователя sshuser:
+AllowUsers sshuser
+
+Ограничение количества попыток авторизации:
+MaxAuthTries 2
+
+Настройка баннера:
+#Banner none
+Banner /etc/ssh-banner
+sudo nano /etc/ssh-banner
+Впишите строку:
+
+***********************************************************
+*                                                         *
+*                  Authorized access only!                *
+*                                                         *
+***********************************************************
+
+1.3. Перезапуск SSH-сервера
+sudo systemctl restart sshd
+
+
+Проверка настроек:
+С другого устройства (например, с HQ‑CLI) выполните подключение к серверу по порту 2024:
+ssh -p 2024 sshuser@<IP_адрес_сервера>
+
+
+
+
+
+
+GRE-туннель между HQ-RTR и BR-RTR
+Настройка HQ-RTR
+
+# nmtui
+Выбираем «Изменить подключение»
+Выбираем «Добавить»
+Выбираем «IP-туннель"
+Задаём понятные имена «tun1» и «tun1»
+«Режим работы» выбираем «GRE»
+«Родительский» указываем интерфейс в сторону ISP (ens3)
+задаём «Локальный IP» (IP на интерфейсе HQ-RTR в сторону IPS 172.16.4.2)
+задаём «Удалённый IP» (IP на интерфейсе BR-RTR в сторону ISP 172.16.5.2)
+переходим к «КОНФИГУРАЦИЯ IPv4»
+задаём адрес IPv4 для туннеля (10.10.0.1/30)
+
+Для корректной работы протокола динамической маршрутизации требуется увеличить параметр TTL на интерфейсе туннеля:
+nmcli connection modify tun1 ip-tunnel.ttl 64
+Активируем (перезагружаем) интерфейс tun1
+Проверяем:
+ip -c --br a
+
+Настройка BR-RTR
+Настройка GRE – туннеля на BR-RTR производится аналогично HQ-RTR
+nmtui
+Производим настройку
+
+Выбираем «Изменить подключение»
+Выбираем «Добавить»
+Выбираем «IP-туннель
+Задаём понятные имена «tun2» и «tun2»
+«Режим работы» выбираем «GRE»
+«Родительский» указываем интерфейс в сторону ISP (ens3)
+задаём «Локальный IP» (IP на интерфейсе BR-RTR в сторону IPS 172.16.5.2)
+задаём «Удалённый IP» (IP на интерфейсе HQ-RTR в сторону ISP 172.16.4.2)
+переходим к «КОНФИГУРАЦИЯ IPv4»
+задаём адрес IPv4 для туннеля (10.10.0.2/30)
+
+Для корректной работы протокола динамической маршрутизации требуется увеличить параметр TTL на интерфейсе туннеля:
+nmcli connection modify tun1 ip-tunnel.ttl 64
+Активируем (перезагружаем) интерфейс tun1
+ip -c a
 
 
