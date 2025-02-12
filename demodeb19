@@ -257,7 +257,7 @@ sudo systemctl enable isc-dhcp-server
 
 
 
-1. Настройка SSH-сервера
+1. Настройка SSH-сервера на HQ-SRV и BR-SRV.
 1.1. Редактирование файла конфигурации SSH
 sudo nano /etc/ssh/sshd_config
 Port 2024
