@@ -342,6 +342,150 @@ ip -c a
 
 
 
+Для выполнения задания выполните следующие шаги:
+
+1. Настройка GRE-туннеля между HQ-RTR и BR-RTR:
+
+На HQ-RTR:
+
+bash
+Copy
+ip tunnel add tun0 mode gre remote 172.16.5.2 local 172.16.4.2
+ip addr add 192.168.255.1/30 dev tun0
+ip link set tun0 up
+На BR-RTR:
+
+bash
+Copy
+ip tunnel add tun0 mode gre remote 172.16.4.2 local 172.16.5.2
+ip addr add 192.168.255.2/30 dev tun0
+ip link set tun0 up
+2. Установка и активация FRR (OSPF):
+На обоих роутерах:
+
+bash
+Copy
+apt update && apt install -y frr
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+systemctl restart frr
+3. Настройка OSPF с аутентификацией:
+На HQ-RTR (vtysh):
+
+bash
+Copy
+configure terminal
+interface tun0
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 SecurePass123
+exit
+router ospf
+ network 192.168.100.0/26 area 0
+ network 192.168.100.64/28 area 0
+ network 192.168.100.80/29 area 0
+ network 192.168.255.0/30 area 0
+ area 0 authentication message-digest
+exit
+write
+На BR-RTR (vtysh):
+
+bash
+Copy
+configure terminal
+interface tun0
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 SecurePass123
+exit
+router ospf
+ network 192.168.200.0/27 area 0
+ network 192.168.255.0/30 area 0
+ area 0 authentication message-digest
+exit
+write
+4. Проверка настройки:
+
+bash
+Copy
+vtysh -c "show ip ospf neighbor"
+vtysh -c "show ip route"
+5. Включение IP-форвардинга:
+На обоих роутерах:
+
+bash
+Copy
+echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+sysctl -p
+Результат:
+
+Маршрутизаторы обмениваются маршрутами через защищенный OSPF-туннель
+
+Сети HQ доступны из BR и наоборот
+
+OSPF активирован только на туннельных интерфейсах
+
+Используется MD5-аутентификация для защиты протокола
+
+
+
+
+
+
+
+
+Для выполнения задания выполните следующие шаги:
+
+
+2. Установка и активация FRR (OSPF):
+На обоих роутерах:
+
+apt update && apt install -y frr
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+systemctl restart frr
+3. Настройка OSPF с аутентификацией:
+На HQ-RTR (vtysh):
+
+configure terminal
+interface tun1
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 Test123
+exit
+router ospf
+ network 192.168.100.0/26 area 0
+ network 192.168.100.64/28 area 0
+ network 10.10.0.0/30 area 0
+ area 0 authentication message-digest
+exit
+write
+
+
+На BR-RTR (vtysh):
+configure terminal
+interface tun1
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 Test123
+exit
+router ospf
+ network 192.168.200.0/27 area 0
+ network 10.10.0.0/30 area 0
+ area 0 authentication message-digest
+exit
+write
+
+4. Проверка настройки:
+
+vtysh -c "show ip ospf neighbor"
+vtysh -c "show ip route"
+
+
+
+Маршрутизаторы обмениваются маршрутами через защищенный OSPF-туннель
+
+Сети HQ доступны из BR и наоборот
+
+OSPF активирован только на туннельных интерфейсах
+
+Используется MD5-аутентификация для защиты протокола
+
+
 
 
 
