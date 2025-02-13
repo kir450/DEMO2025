@@ -347,7 +347,6 @@ ip -c a
 
 2. Установка и активация FRR (OSPF):
 На обоих роутерах:
-
 apt update && apt install -y frr
 sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
 systemctl restart frr
@@ -365,7 +364,9 @@ router ospf
  network 10.10.0.0/30 area 0
  area 0 authentication message-digest
 exit
+exit
 write
+exit
 
 
 На BR-RTR (vtysh):
@@ -379,7 +380,9 @@ router ospf
  network 10.10.0.0/30 area 0
  area 0 authentication message-digest
 exit
+exit
 write
+exit
 
 4. Проверка настройки:
 
