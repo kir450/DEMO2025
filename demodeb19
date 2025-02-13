@@ -376,141 +376,40 @@ ip -c a
 Эти действия удалят FRR, все его пакеты, конфигурационные файлы и остаточные данные из вашей системы.
 
 
+                                                                                                                                                 
+  2. Установка и активация FRR (OSPF):
+На обоих роутерах:
+
+apt update && apt install -y frr
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+systemctl restart frr
+
+3. Настройка OSPF с аутентификацией:
+На HQ-RTR (vtysh):
+
+configure terminal
+interface tun1
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 Test123
+exit
+router ospf
+ network 192.168.100.0/26 area 0
+ network 192.168.100.64/28 area 0
+ network 10.10.0.0/30 area 0
+ area 0 authentication message-digest
+exit
+write
 
 
-При использовании FRR в режиме multi-instance OSPF (как это часто бывает в Debian 10) команда network не поддерживается. Вместо объявления сетей глобально через команду network, необходимо включать OSPF на конкретных интерфейсах, в которых находятся ваши подсети. Ниже приведён пример того, как можно адаптировать конфигурацию для HQ‑RTR и BR‑RTR.
-
----
-
-### Пример настройки OSPF на HQ‑RTR
-
-#### 1. Запустите vtysh  
-В Linux Shell:
-```bash
-sudo vtysh
-```
-
-#### 2. Войдите в глобальный режим конфигурации
-```
-hq-rtr.au-team.irpo# configure terminal
-```
-
-#### 3. Создайте процесс OSPF и задайте router-id, а также включите аутентификацию для области 0
-```
-hq-rtr.au-team.irpo(config)# router ospf
-hq-rtr.au-team.irpo(config-router)# router-id 1.1.1.1
-hq-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
-hq-rtr.au-team.irpo(config-router)# exit
-```
-
-#### 4. Настройте интерфейсы, на которых должен работать OSPF  
-Вместо команды network вам нужно перейти в режим каждого интерфейса и активировать OSPF в области 0.
-
-Например, если у вас:
-- Интерфейс **vlan100** отвечает за сеть 192.168.100.0/26  
-- Интерфейс **vlan200** отвечает за сеть 192.168.100.64/28  
-- Туннельный интерфейс **tunnel.0** используется для связи с BR‑RTR (сеть 172.16.0.0/30 или 10.10.0.0/30)
-
-Для интерфейса vlan100:
-```
-hq-rtr.au-team.irpo(config)# interface vlan100
-hq-rtr.au-team.irpo(config-if)# ip ospf area 0
-hq-rtr.au-team.irpo(config-if)# exit
-```
-
-Для интерфейса vlan200:
-```
-hq-rtr.au-team.irpo(config)# interface vlan200
-hq-rtr.au-team.irpo(config-if)# ip ospf area 0
-hq-rtr.au-team.irpo(config-if)# exit
-```
-
-Для туннельного интерфейса tunnel.0 (здесь также настраивается аутентификация и отключается пассивный режим):
-```
-hq-rtr.au-team.irpo(config)# interface tunnel.0
-hq-rtr.au-team.irpo(config-if)# ip ospf area 0
-hq-rtr.au-team.irpo(config-if)# no ip ospf passive
-hq-rtr.au-team.irpo(config-if)# ip ospf authentication message-digest
-hq-rtr.au-team.irpo(config-if)# ip ospf message-digest-key 1 md5 Test123
-hq-rtr.au-team.irpo(config-if)# exit
-```
-
-#### 5. Сохраните конфигурацию
-```
-hq-rtr.au-team.irpo(config)# exit
-hq-rtr.au-team.irpo# write
-hq-rtr.au-team.irpo# exit
-```
-
----
-
-### Пример настройки OSPF на BR‑RTR
-
-Предположим, что на BR‑RTR:
-- Локальная сеть офиса BR – реализована на интерфейсе, например, **vlanBR** (сеть 192.168.200.0/27)  
-- Туннельный интерфейс – **tunnel.0** используется для связи с HQ‑RTR
-
-#### 1. Запустите vtysh
-```bash
-sudo vtysh
-```
-
-#### 2. Войдите в режим глобальной конфигурации
-```
-br-rtr.au-team.irpo# configure terminal
-```
-
-#### 3. Создайте процесс OSPF и задайте router-id, а также включите аутентификацию для области 0
-```
-br-rtr.au-team.irpo(config)# router ospf
-br-rtr.au-team.irpo(config-router)# router-id 2.2.2.2
-br-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
-br-rtr.au-team.irpo(config-router)# exit
-```
-
-#### 4. Настройте интерфейсы
-Для интерфейса vlanBR:
-```
-br-rtr.au-team.irpo(config)# interface vlanBR
-br-rtr.au-team.irpo(config-if)# ip ospf area 0
-br-rtr.au-team.irpo(config-if)# exit
-```
-
-Для туннельного интерфейса tunnel.0:
-```
-br-rtr.au-team.irpo(config)# interface tunnel.0
-br-rtr.au-team.irpo(config-if)# ip ospf area 0
-br-rtr.au-team.irpo(config-if)# no ip ospf passive
-br-rtr.au-team.irpo(config-if)# ip ospf authentication message-digest
-br-rtr.au-team.irpo(config-if)# ip ospf message-digest-key 1 md5 Test123
-br-rtr.au-team.irpo(config-if)# exit
-```
-
-#### 5. Сохраните конфигурацию
-```
-br-rtr.au-team.irpo(config)# exit
-br-rtr.au-team.irpo# write
-br-rtr.au-team.irpo# exit
-```
-
----
-
-### Проверка настройки
-
-После применения настроек на обоих маршрутизаторах можно проверить установление соседства и полученные маршруты:
-  
-```bash
-vtysh -c "show ip ospf neighbor"
-vtysh -c "show ip route ospf"
-```
-
----
-
-### Итог
-
-При работе в режиме multi-instance OSPF в FRR (версия 7.5.1) вместо глобальной команды network необходимо включать OSPF для каждой подсети через интерфейсную конфигурацию. В приведённых примерах:
-  
-- На HQ‑RTR настроены интерфейсы vlan100, vlan200 и tunnel.0 (с аутентификацией и отключением пассивного режима)  
-- На BR‑RTR аналогично настроен интерфейс vlanBR и tunnel.0
-
-Это позволяет маршрутизаторам обмениваться маршрутами только через туннельный интерфейс с включённой MD5-аутентификацией (пароль Test123).
+На BR-RTR (vtysh):
+configure terminal
+interface tun1
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 Test123
+exit
+router ospf
+ network 192.168.200.0/27 area 0
+ network 10.10.0.0/30 area 0
+ area 0 authentication message-digest
+exit
+write
