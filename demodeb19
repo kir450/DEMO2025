@@ -435,105 +435,126 @@ vtysh -c "show ip route"
 
 
 
-Ниже приведён вариант исправленной инструкции для настройки OSPF с FRR версии 7.5.1 на Debian 10, адаптированной для вашей конфигурации. Судя по вашему описанию, на BR‑RTR соседство устанавливается (BR‑RTR видит HQ‑RTR), а на HQ‑RTR не обнаруживаются соседи (не видит BR‑RTR). Скорее всего, на HQ‑RTR не отключён пассивный режим на интерфейсе туннеля, поэтому он не принимает OSPF‑hellos по этому интерфейсу. Чтобы исправить ситуацию, необходимо добавить команду, которая явно разрешает работу OSPF на туннельном интерфейсе.
-
-Ниже – исправленная инструкция.
+  Ниже приведена проверенная инструкция с небольшими комментариями и рекомендациями для настройки FRR и OSPF с MD5-аутентификацией на обоих роутерах (HQ-RTR и BR-RTR) на Debian 10:
 
 ---
 
-### 1. Установка и активация FRR (OSPF)
-
+### 2. Установка и активация FRR (OSPF)  
 На обоих роутерах выполните:
+  
 ```bash
-sudo apt update && sudo apt install -y frr
-sudo sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
-sudo systemctl restart frr
+apt update && apt install -y frr
 ```
+  
+Затем включите демон ospfd, отредактировав файл **/etc/frr/daemons**. Если в нём по умолчанию указано `ospfd=no`, замените на:
+  
+```bash
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+```
+  
+Перезапустите FRR:
+  
+```bash
+systemctl restart frr
+```
+  
+*Комментарий:* Убедитесь, что в файле **/etc/frr/daemons** действительно присутствует строка `ospfd=no`, чтобы sed сработал корректно.
 
 ---
 
-### 2. Настройка OSPF с аутентификацией на HQ‑RTR
+### 3. Настройка OSPF с аутентификацией
 
-Запустите vtysh:
-```bash
-sudo vtysh
-```
-и выполните следующие команды:
-```
-configure terminal
-
-! Настройка интерфейса туннеля (предполагается, что это tun1)
-interface tun1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 Test123
-exit
-
-router ospf 1
-  router-id 1.1.1.1
-  network 192.168.100.0/26 area 0
-  network 192.168.100.64/28 area 0
-  network 10.10.0.0/30 area 0
-  area 0 authentication message-digest
-  ! Разрешаем работу OSPF на туннельном интерфейсе
-  no passive-interface tun1
-exit
-
-write
-exit
-```
+#### На HQ-RTR (через vtysh):
+  
+1. Запустите vtysh:
+   ```bash
+   sudo vtysh
+   ```
+  
+2. Войдите в режим глобальной конфигурации:
+   ```
+   configure terminal
+   ```
+  
+3. Настройте туннельный интерфейс для OSPF с MD5-аутентификацией:
+   ```
+   interface tun1
+    ip ospf authentication message-digest
+    ip ospf message-digest-key 1 md5 Test123
+   exit
+   ```
+  
+4. Создайте процесс OSPF, объявите сети и включите аутентификацию для области:
+   ```
+   router ospf 1
+    router-id 1.1.1.1
+    network 192.168.100.0/26 area 0
+    network 192.168.100.64/28 area 0
+    network 10.10.0.0/30 area 0
+    area 0 authentication message-digest
+   exit
+   exit
+   write
+   exit
+   ```
+  
+*Примечание:* Если команда `write` не сохраняет конфигурацию в вашей версии FRR, можно попробовать команду `copy running-config startup-config`.
 
 ---
 
-### 3. Настройка OSPF с аутентификацией на BR‑RTR
-
-На BR‑RTR аналогично (заменяя локальную сеть и router-id):
-```
-configure terminal
-
-interface tun1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 Test123
-exit
-
-router ospf 1
-  router-id 2.2.2.2
-  network 192.168.200.0/27 area 0
-  network 10.10.0.0/30 area 0
-  area 0 authentication message-digest
-  no passive-interface tun1
-exit
-
-write
-exit
-```
+#### На BR-RTR (через vtysh):
+  
+1. Запустите vtysh:
+   ```bash
+   sudo vtysh
+   ```
+  
+2. Войдите в режим глобальной конфигурации:
+   ```
+   configure terminal
+   ```
+  
+3. Настройте туннельный интерфейс:
+   ```
+   interface tun1
+    ip ospf authentication message-digest
+    ip ospf message-digest-key 1 md5 Test123
+   exit
+   ```
+  
+4. Создайте процесс OSPF, объявите сети и включите аутентификацию:
+   ```
+   router ospf 1
+    router-id 2.2.2.2
+    network 192.168.200.0/27 area 0
+    network 10.10.0.0/30 area 0
+    area 0 authentication message-digest
+   exit
+   exit
+   write
+   exit
+   ```
 
 ---
 
 ### 4. Проверка настройки
 
-На обоих роутерах выполните:
+Для проверки корректности настройки OSPF выполните следующие команды:
+
 ```bash
-sudo vtysh -c "show ip ospf neighbor"
-sudo vtysh -c "show ip route"
+vtysh -c "show ip ospf neighbor"
+vtysh -c "show ip route"
 ```
-Убедитесь, что на обеих сторонах видны соседи и маршруты, полученные через OSPF.
+
+Эти команды покажут список соседей OSPF и маршруты, полученные через OSPF.
 
 ---
 
-### Комментарии к исправлению
+### Резюме
 
-- **no passive-interface tun1**  
-  На HQ‑RTR (и на BR‑RTR) важно явно отключить пассивный режим для интерфейса туннеля, чтобы этот интерфейс мог принимать и отправлять OSPF‑hellos. В вашей исходной инструкции для HQ‑RTR эта команда отсутствовала, что и приводило к тому, что HQ‑RTR не видел BR‑RTR.
+- **Установка FRR:** Инструкция с `apt update`, установкой FRR и активацией ospfd через sed выглядит корректной (при условии, что в файле **/etc/frr/daemons** действительно содержится `ospfd=no`).
+- **Настройка OSPF на HQ-RTR и BR-RTR:** Конфигурация через vtysh с указанием интерфейса туннеля (tun1), объявления сетей и включения MD5-аутентификации (с ключом 1 и паролем Test123) соответствует требованиям.
+- **Проверка:** Использование `vtysh -c "show ip ospf neighbor"` и `vtysh -c "show ip route"` позволяет убедиться в установлении соседства и корректном обмене маршрутами.
 
-- **Аутентификация**  
-  Обе стороны используют MD5-аутентификацию с ключом 1 и паролем «Test123», что соответствует требованиям защиты протокола.
-
-- **Объявляемые сети**  
-  Убедитесь, что IP‑адреса, назначенные на туннельных интерфейсах, входят в подсеть 10.10.0.0/30 и что эта подсеть настроена корректно на обоих роутерах.
-
-После внесения команды `no passive-interface tun1` в конфигурацию OSPF на HQ‑RTR, оба маршрутизатора должны увидеть друг друга, и динамическая маршрутизация будет работать корректно.
-
-Эта инструкция адаптирована для Debian 10 и FRR 7.5.1, с учетом ваших сетевых параметров и требований.
-
-
+Ваша инструкция выглядит рабочей для Debian 10 и FRR (версия 7.5.1) с учетом описанных условий. Если возникают проблемы с сохранением конфигурации, проверьте используемые команды сохранения (например, `write` или `copy running-config startup-config`).
 
