@@ -342,57 +342,6 @@ ip -c a
 
 
 
-Для выполнения задания выполните следующие шаги:
-
-
-2. Установка и активация FRR (OSPF):
-На обоих роутерах:
-apt update && apt install -y frr
-sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
-systemctl restart frr
-
-3. Настройка OSPF с аутентификацией:
-На HQ-RTR (vtysh):
-configure terminal
-interface tun1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 Test123
-exit
-router ospf
- network 192.168.100.0/26 area 0
- network 192.168.100.64/28 area 0
- network 10.10.0.0/30 area 0
- area 0 authentication message-digest
-exit
-exit
-write
-exit
-
-
-На BR-RTR (vtysh):
-configure terminal
-interface tun1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 Test123
-exit
-router ospf
- network 192.168.200.0/27 area 0
- network 10.10.0.0/30 area 0
- area 0 authentication message-digest
-exit
-exit
-write
-exit
-
-4. Проверка настройки:
-
-vtysh -c "show ip ospf neighbor"
-vtysh -c "show ip route"
-
-
-
-
-
 
 Чтобы полностью удалить FRR вместе со всеми его настройками и файлами на Debian 10, выполните следующие шаги:
 
@@ -428,14 +377,7 @@ vtysh -c "show ip route"
 
 
 
-
-
-
-
-
-
-
-  Ниже приведена проверенная инструкция с небольшими комментариями и рекомендациями для настройки FRR и OSPF с MD5-аутентификацией на обоих роутерах (HQ-RTR и BR-RTR) на Debian 10:
+Ниже приведена проверенная инструкция с небольшими комментариями и рекомендациями для настройки FRR и OSPF с MD5-аутентификацией на обоих роутерах (HQ-RTR и BR-RTR) на Debian 10:
 
 ---
 
@@ -557,4 +499,3 @@ vtysh -c "show ip route"
 - **Проверка:** Использование `vtysh -c "show ip ospf neighbor"` и `vtysh -c "show ip route"` позволяет убедиться в установлении соседства и корректном обмене маршрутами.
 
 Ваша инструкция выглядит рабочей для Debian 10 и FRR (версия 7.5.1) с учетом описанных условий. Если возникают проблемы с сохранением конфигурации, проверьте используемые команды сохранения (например, `write` или `copy running-config startup-config`).
-
