@@ -391,64 +391,37 @@ vtysh -c "show ip route"
 
 
 
+Чтобы полностью удалить FRR вместе со всеми его настройками и файлами на Debian 10, выполните следующие шаги:
 
+1. **Остановите службу FRR:**
+   ```bash
+   sudo systemctl stop frr
+   ```
 
+2. **Удалите установленные пакеты FRR с сохранением минимального количества следов:**
+   Используйте команду purge, чтобы удалить пакет и все его конфигурационные файлы:
+   ```bash
+   sudo apt purge frr -y
+   ```
+   Если у вас установлены дополнительные пакеты, связанные с FRR (например, frr-pythontools), удалите их аналогичным образом:
+   ```bash
+   sudo apt purge frr-pythontools -y
+   ```
 
+3. **Очистите систему от неиспользуемых пакетов:**
+   После удаления пакетов можно выполнить autoremove:
+   ```bash
+   sudo apt autoremove -y
+   ```
 
-Для выполнения задания выполните следующие шаги:
+4. **Удалите остаточные конфигурационные файлы и директории:**
+   Обычно конфигурация FRR хранится в каталоге **/etc/frr**. Также могут оставаться файлы журналов в **/var/log/frr**. Удалите их:
+   ```bash
+   sudo rm -rf /etc/frr
+   sudo rm -rf /var/log/frr
+   ```
 
-
-2. Установка и активация FRR (OSPF):
-На обоих роутерах:
-
-apt update && apt install -y frr
-sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
-systemctl restart frr
-3. Настройка OSPF с аутентификацией:
-На HQ-RTR (vtysh):
-
-configure terminal
-interface tun1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 Test123
-exit
-router ospf
- network 192.168.100.0/26 area 0
- network 192.168.100.64/28 area 0
- network 10.10.0.0/30 area 0
- area 0 authentication message-digest
-exit
-write
-
-
-На BR-RTR (vtysh):
-configure terminal
-interface tun1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 Test123
-exit
-router ospf
- network 192.168.200.0/27 area 0
- network 10.10.0.0/30 area 0
- area 0 authentication message-digest
-exit
-write
-
-4. Проверка настройки:
-
-vtysh -c "show ip ospf neighbor"
-vtysh -c "show ip route"
-
-
-
-Маршрутизаторы обмениваются маршрутами через защищенный OSPF-туннель
-
-Сети HQ доступны из BR и наоборот
-
-OSPF активирован только на туннельных интерфейсах
-
-Используется MD5-аутентификация для защиты протокола
-
+Эти действия удалят FRR, все его пакеты, конфигурационные файлы и остаточные данные из вашей системы.
 
 
 
