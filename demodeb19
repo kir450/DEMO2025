@@ -430,3 +430,110 @@ vtysh -c "show ip route"
 
 
 
+
+
+
+
+
+Ниже приведён вариант исправленной инструкции для настройки OSPF с FRR версии 7.5.1 на Debian 10, адаптированной для вашей конфигурации. Судя по вашему описанию, на BR‑RTR соседство устанавливается (BR‑RTR видит HQ‑RTR), а на HQ‑RTR не обнаруживаются соседи (не видит BR‑RTR). Скорее всего, на HQ‑RTR не отключён пассивный режим на интерфейсе туннеля, поэтому он не принимает OSPF‑hellos по этому интерфейсу. Чтобы исправить ситуацию, необходимо добавить команду, которая явно разрешает работу OSPF на туннельном интерфейсе.
+
+Ниже – исправленная инструкция.
+
+---
+
+### 1. Установка и активация FRR (OSPF)
+
+На обоих роутерах выполните:
+```bash
+sudo apt update && sudo apt install -y frr
+sudo sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+sudo systemctl restart frr
+```
+
+---
+
+### 2. Настройка OSPF с аутентификацией на HQ‑RTR
+
+Запустите vtysh:
+```bash
+sudo vtysh
+```
+и выполните следующие команды:
+```
+configure terminal
+
+! Настройка интерфейса туннеля (предполагается, что это tun1)
+interface tun1
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 Test123
+exit
+
+router ospf 1
+  router-id 1.1.1.1
+  network 192.168.100.0/26 area 0
+  network 192.168.100.64/28 area 0
+  network 10.10.0.0/30 area 0
+  area 0 authentication message-digest
+  ! Разрешаем работу OSPF на туннельном интерфейсе
+  no passive-interface tun1
+exit
+
+write
+exit
+```
+
+---
+
+### 3. Настройка OSPF с аутентификацией на BR‑RTR
+
+На BR‑RTR аналогично (заменяя локальную сеть и router-id):
+```
+configure terminal
+
+interface tun1
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 Test123
+exit
+
+router ospf 1
+  router-id 2.2.2.2
+  network 192.168.200.0/27 area 0
+  network 10.10.0.0/30 area 0
+  area 0 authentication message-digest
+  no passive-interface tun1
+exit
+
+write
+exit
+```
+
+---
+
+### 4. Проверка настройки
+
+На обоих роутерах выполните:
+```bash
+sudo vtysh -c "show ip ospf neighbor"
+sudo vtysh -c "show ip route"
+```
+Убедитесь, что на обеих сторонах видны соседи и маршруты, полученные через OSPF.
+
+---
+
+### Комментарии к исправлению
+
+- **no passive-interface tun1**  
+  На HQ‑RTR (и на BR‑RTR) важно явно отключить пассивный режим для интерфейса туннеля, чтобы этот интерфейс мог принимать и отправлять OSPF‑hellos. В вашей исходной инструкции для HQ‑RTR эта команда отсутствовала, что и приводило к тому, что HQ‑RTR не видел BR‑RTR.
+
+- **Аутентификация**  
+  Обе стороны используют MD5-аутентификацию с ключом 1 и паролем «Test123», что соответствует требованиям защиты протокола.
+
+- **Объявляемые сети**  
+  Убедитесь, что IP‑адреса, назначенные на туннельных интерфейсах, входят в подсеть 10.10.0.0/30 и что эта подсеть настроена корректно на обоих роутерах.
+
+После внесения команды `no passive-interface tun1` в конфигурацию OSPF на HQ‑RTR, оба маршрутизатора должны увидеть друг друга, и динамическая маршрутизация будет работать корректно.
+
+Эта инструкция адаптирована для Debian 10 и FRR 7.5.1, с учетом ваших сетевых параметров и требований.
+
+
+
