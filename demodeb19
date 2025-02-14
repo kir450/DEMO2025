@@ -337,9 +337,47 @@ ip -c a
 
 
 
+2. Установка и активация FRR (OSPF):
+На обоих роутерах:
 
+apt update && apt install -y frr
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+systemctl restart frr
+3. Настройка OSPF с аутентификацией:
+На HQ-RTR (vtysh):
 
+configure terminal
+interface tun1
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 Test123
+exit
+router ospf
+ network 192.168.100.0/26 area 0
+ network 192.168.100.64/28 area 0
+ network 10.10.0.0/30 area 0
+ area 0 authentication message-digest
+exit
+exit
+write
+exit
 
+На BR-RTR (vtysh):
+configure terminal
+interface tun1
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 Test123
+exit
+router ospf
+ network 192.168.200.0/27 area 0
+ network 10.10.0.0/30 area 0
+ area 0 authentication message-digest
+exit
+exit
+write
+exit
+
+vtysh -c "show ip ospf neighbor"
+vtysh -c "show ip route"
 
 
 
