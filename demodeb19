@@ -362,51 +362,41 @@ vtysh -c "show running-config"
 1. Настройка GRE-туннеля между HQ-RTR и BR-RTR:
 
 На HQ-RTR:
-
-bash
-Copy
 ip tunnel add tun0 mode gre remote 172.16.5.2 local 172.16.4.2
-ip addr add 192.168.255.1/30 dev tun0
-ip link set tun0 up
-На BR-RTR:
+ip addr add 10.10.0.1/30 dev tun1
+ip link set tun1 up
 
-bash
-Copy
+На BR-RTR:
 ip tunnel add tun0 mode gre remote 172.16.4.2 local 172.16.5.2
-ip addr add 192.168.255.2/30 dev tun0
-ip link set tun0 up
+ip addr add 10.10.0.2/30 dev tun1
+ip link set tun1 up
+
 2. Установка и активация FRR (OSPF):
 На обоих роутерах:
-
-bash
-Copy
 apt update && apt install -y frr
 sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
 systemctl restart frr
+
 3. Настройка OSPF с аутентификацией:
 На HQ-RTR (vtysh):
 
-bash
-Copy
 configure terminal
-interface tun0
+interface tun1
  ip ospf authentication message-digest
  ip ospf message-digest-key 1 md5 SecurePass123
 exit
 router ospf
  network 192.168.100.0/26 area 0
  network 192.168.100.64/28 area 0
- network 192.168.100.80/29 area 0
- network 192.168.255.0/30 area 0
+ network 10.10.0.0/30 area 0
  area 0 authentication message-digest
 exit
 write
-На BR-RTR (vtysh):
 
-bash
-Copy
+
+На BR-RTR (vtysh):
 configure terminal
-interface tun0
+interface tun1
  ip ospf authentication message-digest
  ip ospf message-digest-key 1 md5 SecurePass123
 exit
@@ -416,17 +406,13 @@ router ospf
  area 0 authentication message-digest
 exit
 write
+
 4. Проверка настройки:
 
-bash
-Copy
 vtysh -c "show ip ospf neighbor"
 vtysh -c "show ip route"
-5. Включение IP-форвардинга:
-На обоих роутерах:
 
-bash
-Copy
+5. Включение IP-форвардинга:
 echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
 sysctl -p
 
