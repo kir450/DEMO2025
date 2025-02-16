@@ -362,16 +362,17 @@ vtysh -c "show running-config"
 1. Настройка GRE-туннеля между HQ-RTR и BR-RTR:
 
 На HQ-RTR:
-ip tunnel add tun0 mode gre remote 172.16.5.2 local 172.16.4.2
+ip tunnel add tun1 mode gre remote 172.16.5.2 local 172.16.4.2
 ip addr add 10.10.0.1/30 dev tun1
 ip link set tun1 up
 
 На BR-RTR:
-ip tunnel add tun0 mode gre remote 172.16.4.2 local 172.16.5.2
+ip tunnel add tun1 mode gre remote 172.16.4.2 local 172.16.5.2
 ip addr add 10.10.0.2/30 dev tun1
 ip link set tun1 up
 
 2. Установка и активация FRR (OSPF):
+
 На обоих роутерах:
 apt update && apt install -y frr
 sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
@@ -395,6 +396,7 @@ write
 
 
 На BR-RTR (vtysh):
+
 configure terminal
 interface tun1
  ip ospf authentication message-digest
@@ -402,7 +404,7 @@ interface tun1
 exit
 router ospf
  network 192.168.200.0/27 area 0
- network 192.168.255.0/30 area 0
+ network 10.10.0.0/30 area 0
  area 0 authentication message-digest
 exit
 write
