@@ -363,6 +363,28 @@ ping -c 3 10.10.0.2  # с HQ-RTR, если его туннельный IP 10.10.
 vtysh -c "show running-config"
 
 
+Полное удаление FRR вместе с его настройками
+
+Остановите службу FRR:
+sudo systemctl stop frr
+
+Удалите пакет FRR с конфигурационными файлами:
+sudo apt purge frr -y
+
+Очистите систему от неиспользуемых пакетов:
+sudo apt autoremove -y
+
+Удалите оставшиеся конфигурационные файлы и директории:
+sudo rm -rf /etc/frr
+sudo rm -rf /var/log/frr
+
+
+
+
+
+
+
+
 
 Пример для HQ‑RTR (через vtysh):
 
