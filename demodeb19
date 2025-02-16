@@ -332,27 +332,20 @@ nmtui
 
 
 
+Полное удаление FRR вместе с его настройками
 
-Удаление конфигурации OSPF через vtysh
-sudo vtysh
+Остановите службу FRR:
+sudo systemctl stop frr
 
-Перейдите в режим глобальной конфигурации:
-configure terminal
+Удалите пакет FRR с конфигурационными файлами:
+sudo apt purge frr -y
 
-Удалите весь процесс OSPF:
-no router ospf 1
+Очистите систему от неиспользуемых пакетов:
+sudo apt autoremove -y
 
-Сохраните конфигурацию:
-write
-exit
-
-Проверьте, что OSPF настройки удалены:
-vtysh -c "show running-config"
-
-
-
-
-
+Удалите оставшиеся конфигурационные файлы и директории:
+sudo rm -rf /etc/frr
+sudo rm -rf /var/log/frr
 
 
 
@@ -411,6 +404,7 @@ write
 
 4. Проверка настройки:
 
+vtysh -c "show running-config"
 vtysh -c "show ip ospf neighbor"
 vtysh -c "show ip route"
 
@@ -430,365 +424,138 @@ sysctl -p
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-Проверьте имя туннельного интерфейса.
-ip link show
-
-Проверьте, что туннель действительно активен.
-ip a
-ping -c 3 10.10.0.2  # с HQ-RTR, если его туннельный IP 10.10.0.1/30
-
-Проверьте, что настройки сохраняются.
-vtysh -c "show running-config"
-
-
-Полное удаление FRR вместе с его настройками
-
-Остановите службу FRR:
-sudo systemctl stop frr
-
-Удалите пакет FRR с конфигурационными файлами:
-sudo apt purge frr -y
-
-Очистите систему от неиспользуемых пакетов:
-sudo apt autoremove -y
-
-Удалите оставшиеся конфигурационные файлы и директории:
-sudo rm -rf /etc/frr
-sudo rm -rf /var/log/frr
-
-
-
-
-
-Пример конфигурации для HQ‑RTR
-Запустите vtysh:
+1. Проверка состояния GRE-туннеля:
+На обоих роутерах выполните:
 
 bash
-Копировать
-Редактировать
-sudo vtysh
-Войдите в режим глобальной конфигурации:
+Copy
+ip -c link show tun1    # Проверьте состояние (должен быть UP)
+ip -c addr show tun1    # Проверьте IP (10.10.0.1/30 и 10.10.0.2/30)
+ping 10.10.0.2         # С HQ-RTR на BR-RTR и наоборот
+Если туннель не работает:
 
-arduino
-Копировать
-Редактировать
-hq-rtr.au-team.irpo# configure terminal
-Создайте процесс OSPF и задайте router-id и общую аутентификацию для области 0:
-
-arduino
-Копировать
-Редактировать
-hq-rtr.au-team.irpo(config)# router ospf 1
-hq-rtr.au-team.irpo(config-router)# router-id 1.1.1.1
-hq-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
-hq-rtr.au-team.irpo(config-router)# exit
-Активируйте OSPF на нужных интерфейсах:
-
-Для интерфейса vlan100 (сеть 192.168.100.0/26):
-Если этот интерфейс должен участвовать в OSPF (например, для мониторинга, но без динамического обмена – можно оставить его в пассивном режиме), выполните:
-
-arduino
-Копировать
-Редактировать
-hq-rtr.au-team.irpo(config)# interface vlan100
-hq-rtr.au-team.irpo(config-if)# ip ospf area 0
-hq-rtr.au-team.irpo(config-if)# ip ospf passive  ! Если не требуется обмен OSPF-обновлениями на этом сегменте
-hq-rtr.au-team.irpo(config-if)# exit
-Для интерфейса vlan200 (сеть 192.168.100.64/28):
-Аналогично можно включить OSPF, если нужно мониторить, но обычно обмен маршрутов проводится только через туннель:
-
-arduino
-Копировать
-Редактировать
-hq-rtr.au-team.irpo(config)# interface vlan200
-hq-rtr.au-team.irpo(config-if)# ip ospf area 0
-hq-rtr.au-team.irpo(config-if)# ip ospf passive  ! Если этот сегмент не участвует в обмене OSPF-обновлениями
-hq-rtr.au-team.irpo(config-if)# exit
-Для туннельного интерфейса tun1 (сеть 10.10.0.0/30):
-Этот интерфейс должен активно обмениваться OSPF-обновлениями между HQ‑RTR и BR‑RTR, поэтому его нужно исключить из пассивного режима и включить аутентификацию:
-
-arduino
-Копировать
-Редактировать
-hq-rtr.au-team.irpo(config)# interface tun1
-hq-rtr.au-team.irpo(config-if)# ip ospf area 0
-hq-rtr.au-team.irpo(config-if)# no ip ospf passive
-hq-rtr.au-team.irpo(config-if)# ip ospf authentication message-digest
-hq-rtr.au-team.irpo(config-if)# ip ospf message-digest-key 1 md5 Test123
-hq-rtr.au-team.irpo(config-if)# exit
-Завершите конфигурацию и сохраните изменения:
-
-arduino
-Копировать
-Редактировать
-hq-rtr.au-team.irpo(config)# exit
-hq-rtr.au-team.irpo# write
-hq-rtr.au-team.irpo# exit
-Пример конфигурации для BR‑RTR
-Запустите vtysh:
+Убедитесь, что интерфейсы ens3 (на HQ-RTR и BR-RTR) имеют правильные IP и доступны:
 
 bash
-Копировать
-Редактировать
-sudo vtysh
-Войдите в режим глобальной конфигурации:
-
-arduino
-Копировать
-Редактировать
-br-rtr.au-team.irpo# configure terminal
-Создайте процесс OSPF и задайте router-id и общую аутентификацию для области 0:
-
-arduino
-Копировать
-Редактировать
-br-rtr.au-team.irpo(config)# router ospf 1
-br-rtr.au-team.irpo(config-router)# router-id 2.2.2.2
-br-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
-br-rtr.au-team.irpo(config-router)# exit
-Активируйте OSPF на нужных интерфейсах:
-
-Для локального интерфейса BR (например, vlanBR, где находится сеть 192.168.200.0/27):
-Если этот интерфейс не должен обмениваться OSPF-обновлениями, оставьте его пассивным:
-
-arduino
-Копировать
-Редактировать
-br-rtr.au-team.irpo(config)# interface vlanBR
-br-rtr.au-team.irpo(config-if)# ip ospf area 0
-br-rtr.au-team.irpo(config-if)# ip ospf passive
-br-rtr.au-team.irpo(config-if)# exit
-Для туннельного интерфейса tun1 (сеть 10.10.0.0/30):
-Этот интерфейс используется для обмена маршрутами с HQ‑RTR:
-
-arduino
-Копировать
-Редактировать
-br-rtr.au-team.irpo(config)# interface tun1
-br-rtr.au-team.irpo(config-if)# ip ospf area 0
-br-rtr.au-team.irpo(config-if)# no ip ospf passive
-br-rtr.au-team.irpo(config-if)# ip ospf authentication message-digest
-br-rtr.au-team.irpo(config-if)# ip ospf message-digest-key 1 md5 Test123
-br-rtr.au-team.irpo(config-if)# exit
-Завершите конфигурацию и сохраните изменения:
-
-arduino
-Копировать
-Редактировать
-br-rtr.au-team.irpo(config)# exit
-br-rtr.au-team.irpo# write
-br-rtr.au-team.irpo# exit
-Проверка работы OSPF
-После применения настроек выполните следующие команды в Linux Shell для проверки соседства и маршрутов:
+Copy
+ping 172.16.4.1      # С HQ-RTR до ISP
+ping 172.16.5.1      # С BR-RTR до ISP
+Пересоздайте туннель с явным указанием TTL:
 
 bash
-Копировать
-Редактировать
-vtysh -c "show ip ospf neighbor"
-vtysh -c "show ip route ospf"
-Если соседство не устанавливается, проверьте следующие моменты:
-
-Туннельный интерфейс tun1 поднят и имеет корректный IP (например, 10.10.0.1/30 на HQ‑RTR и 10.10.0.2/30 на BR‑RTR).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Пример для HQ‑RTR (через vtysh):
-
-hq-rtr.au-team.irpo# configure terminal
-hq-rtr.au-team.irpo(config)# router ospf 1
-hq-rtr.au-team.irpo(config-router)# router-id 1.1.1.1
-hq-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
-hq-rtr.au-team.irpo(config-router)# network 192.168.100.0/26 area 0
-hq-rtr.au-team.irpo(config-router)# network 192.168.100.64/28 area 0
-hq-rtr.au-team.irpo(config-router)# network 10.10.0.0/30 area 0
-hq-rtr.au-team.irpo(config-router)# passive-interface default
-hq-rtr.au-team.irpo(config-router)# no passive-interface tun1
-hq-rtr.au-team.irpo(config-router)# exit
-hq-rtr.au-team.irpo(config)# interface tun1
-hq-rtr.au-team.irpo(config-if)# ip ospf authentication message-digest
-hq-rtr.au-team.irpo(config-if)# ip ospf message-digest-key 1 md5 Test123
-hq-rtr.au-team.irpo(config-if)# exit
-hq-rtr.au-team.irpo(config)# exit
-hq-rtr.au-team.irpo# write
-hq-rtr.au-team.irpo# exit
-
-Пример для BR‑RTR:
-br-rtr.au-team.irpo# configure terminal
-br-rtr.au-team.irpo(config)# router ospf 1
-br-rtr.au-team.irpo(config-router)# router-id 2.2.2.2
-br-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
-br-rtr.au-team.irpo(config-router)# network 192.168.200.0/27 area 0
-br-rtr.au-team.irpo(config-router)# network 10.10.0.0/30 area 0
-br-rtr.au-team.irpo(config-router)# passive-interface default
-br-rtr.au-team.irpo(config-router)# no passive-interface tun1
-br-rtr.au-team.irpo(config-router)# exit
-br-rtr.au-team.irpo(config)# interface tun1
-br-rtr.au-team.irpo(config-if)# ip ospf authentication message-digest
-br-rtr.au-team.irpo(config-if)# ip ospf message-digest-key 1 md5 Test123
-br-rtr.au-team.irpo(config-if)# exit
-br-rtr.au-team.irpo(config)# exit
-br-rtr.au-team.irpo# write
-br-rtr.au-team.irpo# exit
-
-
-Проверка настройки:
-vtysh -c "show ip ospf neighbor"
-vtysh -c "show ip route"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-2. Установка и активация FRR (OSPF):
-На обоих роутерах:
-
-apt update && apt install -y frr
-sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+Copy
+ip tunnel del tun1
+ip tunnel add tun1 mode gre remote <remote_ip> local <local_ip> ttl 64
+ip link set tun1 up
+2. Проверка OSPF-аутентификации:
+Убедитесь, что Key ID и пароль совпадают на обоих роутерах:
+
+bash
+Copy
+vtysh -c "show running-config" | grep "message-digest-key"
+Ожидаемый вывод:
+
+Copy
+ip ospf message-digest-key 1 md5 SecurePass123
+Если есть расхождения:
+
+Перезапишите ключ на проблемном роутере:
+
+bash
+Copy
+vtysh -c "configure terminal" \
+      -c "interface tun1" \
+      -c "no ip ospf message-digest-key 1" \
+      -c "ip ospf message-digest-key 1 md5 SecurePass123" \
+      -c "exit" \
+      -c "write"
+3. Проверка firewall:
+Временно отключите фаервол для тестирования:
+
+bash
+Copy
+iptables -F && iptables -t nat -F
+systemctl stop ufw 2>/dev/null    # Если используется ufw
+4. Проверка объявленных сетей в OSPF:
+На HQ-RTR:
+
+bash
+Copy
+vtysh -c "show running-config" | grep "network"
+Должно быть:
+
+Copy
+network 192.168.100.0/26 area 0
+network 192.168.100.64/28 area 0
+network 10.10.0.0/30 area 0
+На BR-RTR:
+
+Copy
+network 192.168.200.0/27 area 0
+network 10.10.0.0/30 area 0
+Если сети указаны некорректно, исправьте через vtysh:
+
+bash
+Copy
+vtysh -c "configure terminal" \
+      -c "router ospf" \
+      -c "no network <wrong_network>" \
+      -c "network <correct_network> area 0" \
+      -c "write"
+5. Проверка логов FRR:
+bash
+Copy
+journalctl -u frr.service --since "5 minutes ago" | grep ospf
+Ищите ошибки вида:
+
+OSPF packet ignored: mismatch authentication type — неверная аутентификация.
+
+Bad checksum — проблемы с сетью.
+
+6. Принудительный сброс OSPF:
+Перезапустите FRR на обоих роутерах:
+
+bash
+Copy
 systemctl restart frr
-3. Настройка OSPF с аутентификацией:
-На HQ-RTR (vtysh):
+7. Проверка соседства:
+bash
+Copy
+vtysh -c "show ip ospf neighbor"
+Ожидаемый результат:
 
-configure terminal
-interface tun1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 Test123
-exit
-router ospf
- network 192.168.100.0/26 area 0
- network 192.168.100.64/28 area 0
- network 10.10.0.0/30 area 0
- area 0 authentication message-digest
-exit
-exit
-write
-exit
+Copy
+Neighbor ID     Pri   State      Dead Time  Address         Interface
+10.10.0.2       1     Full/DR    00:00:34   10.10.0.2       tun1
+8. Если соседство не установилось:
+Вариант A: Временно отключите аутентификацию
+bash
+Copy
+vtysh -c "configure terminal" \
+      -c "interface tun1" \
+      -c "no ip ospf authentication" \
+      -c "router ospf" \
+      -c "no area 0 authentication" \
+      -c "write"
+Если соседство появится — проблема в аутентификации.
 
-На BR-RTR (vtysh):
-configure terminal
-interface tun1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 Test123
-exit
-router ospf
- network 192.168.200.0/27 area 0
- network 10.10.0.0/30 area 0
- area 0 authentication message-digest
-exit
-exit
-write
-exit
+Вариант B: Проверьте MTU и MSS туннеля
+bash
+Copy
+ip link set tun1 mtu 1400
+9. Дополнительные проверки:
+Убедитесь, что время на обоих роутерах синхронизировано (NTP).
 
+Проверьте, что OSPF включен только на tun1:
 
+bash
+Copy
+vtysh -c "show ip ospf interface brief"
+Итог:
+Если все шаги выполнены, но проблема остается, предоставьте вывод команд:
 
-
-
-
-                                                                                                                                                 
-  2. Установка и активация FRR (OSPF):
-На обоих роутерах:
-
-apt update && apt install -y frr
-sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
-systemctl restart frr
-
-3. Настройка OSPF с аутентификацией:
-На HQ-RTR (vtysh):
-
-configure terminal
-interface tun1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 Test123
-exit
-router ospf
- network 192.168.100.0/26 area 0
- network 192.168.100.64/28 area 0
- network 10.10.0.0/30 area 0
- area 0 authentication message-digest
-exit
-write
-
-
-На BR-RTR (vtysh):
-configure terminal
-interface tun1
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 Test123
-exit
-router ospf
- network 192.168.200.0/27 area 0
- network 10.10.0.0/30 area 0
- area 0 authentication message-digest
-exit
-write
+bash
+Copy
+vtysh -c "show ip ospf interface tun1"
+vtysh -c "show ip ospf neighbor"
+ip route show
