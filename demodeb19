@@ -382,6 +382,147 @@ sudo rm -rf /var/log/frr
 
 
 
+Пример конфигурации для HQ‑RTR
+Запустите vtysh:
+
+bash
+Копировать
+Редактировать
+sudo vtysh
+Войдите в режим глобальной конфигурации:
+
+arduino
+Копировать
+Редактировать
+hq-rtr.au-team.irpo# configure terminal
+Создайте процесс OSPF и задайте router-id и общую аутентификацию для области 0:
+
+arduino
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# router ospf 1
+hq-rtr.au-team.irpo(config-router)# router-id 1.1.1.1
+hq-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
+hq-rtr.au-team.irpo(config-router)# exit
+Активируйте OSPF на нужных интерфейсах:
+
+Для интерфейса vlan100 (сеть 192.168.100.0/26):
+Если этот интерфейс должен участвовать в OSPF (например, для мониторинга, но без динамического обмена – можно оставить его в пассивном режиме), выполните:
+
+arduino
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# interface vlan100
+hq-rtr.au-team.irpo(config-if)# ip ospf area 0
+hq-rtr.au-team.irpo(config-if)# ip ospf passive  ! Если не требуется обмен OSPF-обновлениями на этом сегменте
+hq-rtr.au-team.irpo(config-if)# exit
+Для интерфейса vlan200 (сеть 192.168.100.64/28):
+Аналогично можно включить OSPF, если нужно мониторить, но обычно обмен маршрутов проводится только через туннель:
+
+arduino
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# interface vlan200
+hq-rtr.au-team.irpo(config-if)# ip ospf area 0
+hq-rtr.au-team.irpo(config-if)# ip ospf passive  ! Если этот сегмент не участвует в обмене OSPF-обновлениями
+hq-rtr.au-team.irpo(config-if)# exit
+Для туннельного интерфейса tun1 (сеть 10.10.0.0/30):
+Этот интерфейс должен активно обмениваться OSPF-обновлениями между HQ‑RTR и BR‑RTR, поэтому его нужно исключить из пассивного режима и включить аутентификацию:
+
+arduino
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# interface tun1
+hq-rtr.au-team.irpo(config-if)# ip ospf area 0
+hq-rtr.au-team.irpo(config-if)# no ip ospf passive
+hq-rtr.au-team.irpo(config-if)# ip ospf authentication message-digest
+hq-rtr.au-team.irpo(config-if)# ip ospf message-digest-key 1 md5 Test123
+hq-rtr.au-team.irpo(config-if)# exit
+Завершите конфигурацию и сохраните изменения:
+
+arduino
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# exit
+hq-rtr.au-team.irpo# write
+hq-rtr.au-team.irpo# exit
+Пример конфигурации для BR‑RTR
+Запустите vtysh:
+
+bash
+Копировать
+Редактировать
+sudo vtysh
+Войдите в режим глобальной конфигурации:
+
+arduino
+Копировать
+Редактировать
+br-rtr.au-team.irpo# configure terminal
+Создайте процесс OSPF и задайте router-id и общую аутентификацию для области 0:
+
+arduino
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# router ospf 1
+br-rtr.au-team.irpo(config-router)# router-id 2.2.2.2
+br-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
+br-rtr.au-team.irpo(config-router)# exit
+Активируйте OSPF на нужных интерфейсах:
+
+Для локального интерфейса BR (например, vlanBR, где находится сеть 192.168.200.0/27):
+Если этот интерфейс не должен обмениваться OSPF-обновлениями, оставьте его пассивным:
+
+arduino
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# interface vlanBR
+br-rtr.au-team.irpo(config-if)# ip ospf area 0
+br-rtr.au-team.irpo(config-if)# ip ospf passive
+br-rtr.au-team.irpo(config-if)# exit
+Для туннельного интерфейса tun1 (сеть 10.10.0.0/30):
+Этот интерфейс используется для обмена маршрутами с HQ‑RTR:
+
+arduino
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# interface tun1
+br-rtr.au-team.irpo(config-if)# ip ospf area 0
+br-rtr.au-team.irpo(config-if)# no ip ospf passive
+br-rtr.au-team.irpo(config-if)# ip ospf authentication message-digest
+br-rtr.au-team.irpo(config-if)# ip ospf message-digest-key 1 md5 Test123
+br-rtr.au-team.irpo(config-if)# exit
+Завершите конфигурацию и сохраните изменения:
+
+arduino
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# exit
+br-rtr.au-team.irpo# write
+br-rtr.au-team.irpo# exit
+Проверка работы OSPF
+После применения настроек выполните следующие команды в Linux Shell для проверки соседства и маршрутов:
+
+bash
+Копировать
+Редактировать
+vtysh -c "show ip ospf neighbor"
+vtysh -c "show ip route ospf"
+Если соседство не устанавливается, проверьте следующие моменты:
+
+Туннельный интерфейс tun1 поднят и имеет корректный IP (например, 10.10.0.1/30 на HQ‑RTR и 10.10.0.2/30 на BR‑RTR).
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
