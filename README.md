@@ -220,47 +220,45 @@ net.ipv4.ip_forward=1
 
 4.2. Создание systemd‑сервиса
 
-      wget https://raw.githubusercontent.com/kir450/D/main/ovs-persistent.service
+*      wget https://raw.githubusercontent.com/kir450/D/main/ovs-persistent.service
 
 Сохраните файл, затем выполните:
 
-      sudo systemctl daemon-reload
+*      sudo systemctl daemon-reload
 
-sudo systemctl enable ovs-persistent.service
+*      sudo systemctl enable ovs-persistent.service
 
-sudo systemctl start ovs-persistent.service
+*      sudo systemctl start ovs-persistent.service
 
 Теперь при каждой загрузке системы скрипт автоматически восстановит нужную конфигурацию.
 
 5. Настройка DHCP-сервера для VLAN 200 (для HQ‑CLI)
-   
-Клиент HQ‑CLI должен получать IP-адреса по DHCP из подсети VLAN 200.
 
 5.1. Указание интерфейса для DHCP
 
-sudo nano /etc/default/isc-dhcp-server
+*      sudo nano /etc/default/isc-dhcp-server
 
 INTERFACES="vlan200"
 
 5.2. Конфигурация файла dhcpd.conf
 
-sudo nano /etc/dhcp/dhcpd.conf
+*      sudo nano /etc/dhcp/dhcpd.conf
 
-subnet 192.168.100.64 netmask 255.255.255.240 {
-    range 192.168.100.66 192.168.100.78;
-    option routers 192.168.100.65;
-    option subnet-mask 255.255.255.240;
-    option domain-name-servers 8.8.8.8, 8.8.4.4;
-    option broadcast-address 192.168.100.79;
-    default-lease-time 600;
-    max-lease-time 7200;
-}
+*      subnet 192.168.100.64 netmask 255.255.255.240 {
+           range 192.168.100.66 192.168.100.78;
+            option routers 192.168.100.65;
+            option subnet-mask 255.255.255.240;
+            option domain-name-servers 8.8.8.8, 8.8.4.4;
+            option broadcast-address 192.168.100.79;
+            default-lease-time 600;
+            max-lease-time 7200;
+      }
 
 5.3. Перезапуск DHCP-сервера
 
-sudo systemctl restart isc-dhcp-server
+*     sudo systemctl restart isc-dhcp-server
 
-sudo systemctl enable isc-dhcp-server
+*     sudo systemctl enable isc-dhcp-server
 
 
 # Настройка безопасного удаленного доступа на серверах HQ-SRV и BR-SRV
@@ -269,7 +267,7 @@ sudo systemctl enable isc-dhcp-server
    
 1.1. Редактирование файла конфигурации SSH
 
-sudo nano /etc/ssh/sshd_config
+*     sudo nano /etc/ssh/sshd_config
 
 Port 2024
 
@@ -283,17 +281,19 @@ MaxAuthTries 2
 
 Настройка баннера:
 
-Banner /etc/ssh-banner
+*     Banner /etc/ssh-banner
 
 *     sudo nano /etc/ssh-banner
   
 Впишите строку:
   
-*     ***********Authorized access only***********
-
+    ********************************************
+    *          Authorized access only          *
+    ********************************************
+    
 1.3. Перезапуск SSH-сервера
 
-sudo systemctl restart sshd
+*     sudo systemctl restart sshd
 
 
 Проверка настроек:
@@ -313,13 +313,9 @@ nmtui
 
 Для корректной работы протокола динамической маршрутизации требуется увеличить параметр TTL на интерфейсе туннеля:
 
-nmcli connection modify tun1 ip-tunnel.ttl 64
+*     nmcli connection modify tun1 ip-tunnel.ttl 64
 
 Активируем (перезагружаем) интерфейс tun1
-
-Проверяем:
-
-ip -c --br a
 
 Настройка BR-RTR
 ![image](https://github.com/user-attachments/assets/bf1c59f4-6f7d-4082-976e-6d4f4c0401b4)
