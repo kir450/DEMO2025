@@ -53,7 +53,8 @@ BR-SRV: br-srv.au-team.irpo
 
 sudo nano /etc/hosts
 
-ISP: 127.0.1.1       isp.au-team.irpo
+ISP: 
+*     127.0.1.1       isp.au-team.irpo
 
 HQ-RTR: 127.0.1.1       hq-rtr.au-team.irpo
 
