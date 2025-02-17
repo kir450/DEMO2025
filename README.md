@@ -82,7 +82,10 @@ ISP_HQ-RTR ens3 172.16.4.2/28 Шлюз 172.16.4.1 Серверы DNS 77.88.8.8
 Настройка ens4, ens5, ens6 будет произведена при настройке VLAN
 
 Настройка HQ-SRV
-HQ-RTR_HQ-SRV ens3 192.168.100.2/26 Шлюз 192.168.100.1
+
+HQ-RTR_HQ-SRV ens3 192.168.100.2/26 Шлюз 192.168.100.1 Серверы DNS 77.88.8.8
+![image](https://github.com/user-attachments/assets/9d175cba-ea1b-4b82-82ff-760767cf0edb)
+
 
 Настройка HQ-CLI
 Получает IP – адрес по DHCP
