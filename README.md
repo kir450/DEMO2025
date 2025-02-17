@@ -123,14 +123,17 @@ sysctl -p
 iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
 
 Сохранение iptables‑правил
+
 apt update
 
 apt install iptables-persistent
 
 Если впоследствии потребуется сохранить изменённые правила:
+
 sudo iptables-save | sudo tee /etc/iptables/rules.v4
 
 Проверка iptables‑правил:
+
 sudo iptables -t nat -L -n -v
 
 
