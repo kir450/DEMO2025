@@ -27,7 +27,7 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 | BR-SRV         | ens3      | 192.168.200.2/27  | 192.168.200.1     | BR-RTR_BR-SRV                 |
 
 
-# 1. Настройка имен устройств 
+# 1. Настройка имен устройств.
 
   1.1. Изменение файла /etc/hostname
 
@@ -61,10 +61,13 @@ BR-RTR: 127.0.1.1       br-rtr.au-team.irpo
 
 BR-SRV: 127.0.1.1       br-srv.au-team.irpo
 
-Задаем IP адреса сетевым интерфейсам согласно таблицы адресации.
-nmtui
+# 2. Задаем IP адреса сетевым интерфейсам согласно таблицы адресации, nmtui.
+
 Настройка ISP
+
 Internet-ISP ens3 auto
+![image](https://github.com/user-attachments/assets/98e67fa3-fcff-4371-a753-0a8e13697d45)
+
 ISP_HQ-RTR ens4 172.16.4.1/28
 ISP_BR-RTR ens5 172.16.5.1/28
 
