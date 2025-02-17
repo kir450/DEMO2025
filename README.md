@@ -135,85 +135,109 @@ net.ipv4.ip_forward=1
 
 Предоставление прав sudo без запроса пароля
 
-sudo usermod -aG sudo sshuser
+*     sudo usermod -aG sudo sshuser
 
-sudo visudo
+*     sudo visudo
 
-sshuser ALL=(ALL) NOPASSWD: ALL
+*     sshuser ALL=(ALL) NOPASSWD: ALL
 
 Создание пользователя net_admin на маршрутизаторах HQ‑RTR и BR‑RTR
 
-sudo useradd net_admin -U
+*     sudo useradd net_admin -U
 
-sudo passwd net_admin
+*     sudo passwd net_admin
 
-P@$$word
+*     P@$$word
 
 Предоставление привилегий sudo без запроса пароля
 
-sudo usermod -aG sudo net_admin
+*     sudo usermod -aG sudo net_admin
 
-sudo visudo
+*     sudo visudo
 
-net_admin ALL=(ALL) NOPASSWD: ALL
+*     net_admin ALL=(ALL) NOPASSWD: ALL
 
 
 # Настройка на интерфейсе HQ-RTR в сторону офиса HQ виртуального коммутатора:
 
 1. Установка необходимых пакетов
-Обновите списки пакетов и установите Open vSwitch и DHCP-сервер (isc-dhcp-server):
 
-sudo apt update
+*     sudo apt update
 
-sudo apt install -y openvswitch-switch isc-dhcp-server
+*     sudo apt install -y openvswitch-switch isc-dhcp-server
 
 2. Запуск и автозапуск службы Open vSwitch
 
-sudo systemctl enable --now openvswitch-switch
+*     sudo systemctl enable --now openvswitch-switch
 
 3. Создание виртуального коммутатора (моста) и настройка VLAN
 
-sudo ovs-vsctl add-br hq-sw
+*     sudo ovs-vsctl add-br hq-sw
 
 Добавляем физические интерфейсы с VLAN-тегированием:
 
-sudo ovs-vsctl add-port hq-sw ens4 tag=100
+*sudo ovs-vsctl add-port hq-sw ens4 tag=100
 
-sudo ovs-vsctl add-port hq-sw ens5 tag=200
+*sudo ovs-vsctl add-port hq-sw ens5 tag=200
 
-sudo ovs-vsctl add-port hq-sw ens6 tag=999
+*sudo ovs-vsctl add-port hq-sw ens6 tag=999
 
 3.2. Добавление внутренних портов (internal) для управления VLAN
 
-sudo ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
+*sudo ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
 
-sudo ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
+*sudo ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
 
-sudo ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
+*sudo ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
 
 3.3. Включение моста и внутренних интерфейсов
 
-sudo ip link set hq-sw up
+*sudo ip link set hq-sw up
 
-sudo ip link set vlan100 up
+*sudo ip link set vlan100 up
 
-sudo ip link set vlan200 up
+*sudo ip link set vlan200 up
 
-sudo ip link set vlan999 up
+*sudo ip link set vlan999 up
 
 3.4. Назначение IP-адресов внутренним портам
 
-sudo ip addr add 192.168.100.1/26 dev vlan100
+*sudo ip addr add 192.168.100.1/26 dev vlan100
 
-sudo ip addr add 192.168.100.65/28 dev vlan200
+*sudo ip addr add 192.168.100.65/28 dev vlan200
 
-sudo ip addr add 192.168.100.81/29 dev vlan999
+*sudo ip addr add 192.168.100.81/29 dev vlan999
 
 4. Автоматизация сохранения настроек Open vSwitch после перезагрузки
    
 4.1. Скрипт восстановления конфигурации
 
-wget https://raw.githubusercontent.com/kir450/D/main/ovs-persistent.sh
+*     wget https://raw.githubusercontent.com/kir450/D/main/ovs-persistent.sh
+*     #!/bin/bash
+      # Удаляем существующий мост, если он есть, для чистой конфигурации
+      ovs-vsctl --if-exists del-br hq-sw
+      ovs-vsctl add-br hq-sw
+
+      # Добавляем физические интерфейсы с нужными тегами
+      ovs-vsctl add-port hq-sw ens4 tag=100
+      ovs-vsctl add-port hq-sw ens5 tag=200
+      ovs-vsctl add-port hq-sw ens6 tag=999
+
+      # Добавляем внутренние порты с тегами VLAN
+      ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
+      ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
+      ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
+
+      # Включаем мост и внутренние интерфейсы
+      ip link set hq-sw up
+      ip link set vlan100 up
+      ip link set vlan200 up
+      ip link set vlan999 up
+
+      # Назначаем IP-адреса внутренним интерфейсам
+      ip addr add 192.168.100.1/26 dev vlan100 || true
+      ip addr add 192.168.100.65/28 dev vlan200 || true
+      ip addr add 192.168.100.81/29 dev vlan999 || true
 
 Сохраните файл и сделайте его исполняемым:
 
