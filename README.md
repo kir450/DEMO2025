@@ -34,7 +34,7 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
      sudo nano /etc/hostname
 
  
-     isp.au-team.irpo
+      isp.au-team.irpo
      hq-rtr.au-team.irpo
      br-rtr.au-team.irpo
      hq-srv.au-team.irpo
