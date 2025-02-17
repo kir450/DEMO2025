@@ -88,16 +88,25 @@ HQ-RTR_HQ-SRV ens3 192.168.100.2/26 Шлюз 192.168.100.1 Серверы DNS 77
 
 
 Настройка HQ-CLI
+
 Получает IP – адрес по DHCP
+![image](https://github.com/user-attachments/assets/b658b1f5-3131-4959-855f-11508b948bd7)
+
 
 Настройка BR-RTR
+
 ISP-BR-RTR ens3 172.16.5.2/28 Шлюз 172.16.5.1 Серверы DNS 77.88.8.8
-BR-RTR-BR-SRV ens4 192.168.200.1/27 
+![image](https://github.com/user-attachments/assets/fd020c4c-97a9-4134-b3b1-29a23fdaa1a6)
+
+BR-RTR-BR-SRV ens4 192.168.200.1/27
+![image](https://github.com/user-attachments/assets/b4d39c1d-2e3e-4525-99a9-5328e1ab0599)
 
 Настройка BR-SRV
 BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
+![image](https://github.com/user-attachments/assets/fde2d2d3-d96d-4dfa-a8ab-54ade00a5f00)
 
-Проверить результат настройки IP- адресов можно с помощью команд на выбор:
+
+Проверить результат настройки IP-адресов можно с помощью команд на выбор:
 ip a
 ip –c a
 ip –c –br a
