@@ -136,28 +136,39 @@ sudo iptables-save | sudo tee /etc/iptables/rules.v4
 
 sudo iptables -t nat -L -n -v
 
+# Создание локальных учетных записей
 
+Создание локальных учетных записей на серверах HQ-SRV и BR-SRV.
 
-Создание локальных учетных записей на серверах HQ-SRV и BR-SRV
 sudo useradd sshuser -u 1010 -U
+
 sudo passwd sshuser
+
 P@ssw0rd
 
 Предоставление прав sudo без запроса пароля
+
 sudo usermod -aG sudo sshuser
+
 sudo visudo
+
 sshuser ALL=(ALL) NOPASSWD: ALL
 
 Создание пользователя net_admin на маршрутизаторах HQ‑RTR и BR‑RTR
+
 sudo useradd net_admin -U
+
 sudo passwd net_admin
+
 P@$$word
 
 Предоставление привилегий sudo без запроса пароля
-sudo usermod -aG sudo net_admin
-sudo visudo
-net_admin ALL=(ALL) NOPASSWD: ALL
 
+sudo usermod -aG sudo net_admin
+
+sudo visudo
+
+net_admin ALL=(ALL) NOPASSWD: ALL
 
 
 I. Настройка OpenvSwitch на HQ-RTR
