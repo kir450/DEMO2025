@@ -340,15 +340,11 @@ MaxAuthTries 2
 
 Banner /etc/ssh-banner
 
-* sudo nano /etc/ssh-banner *
-
+*     sudo nano /etc/ssh-banner
+  
 Впишите строку:
-
-***********************************************************
-*                                                         *
-*                  Authorized access only!                *
-*                                                         *
-***********************************************************
+****************************************      
+*     Authorized access only           *
 
 1.3. Перезапуск SSH-сервера
 sudo systemctl restart sshd
