@@ -171,44 +171,62 @@ sudo visudo
 net_admin ALL=(ALL) NOPASSWD: ALL
 
 
-I. Настройка OpenvSwitch на HQ-RTR
+# Настройка OpenvSwitch на HQ-RTR
 
 1. Установка необходимых пакетов
 Обновите списки пакетов и установите Open vSwitch и DHCP-сервер (isc-dhcp-server):
+
 sudo apt update
+
 sudo apt install -y openvswitch-switch isc-dhcp-server
 
 2. Запуск и автозапуск службы Open vSwitch
+
 sudo systemctl enable --now openvswitch-switch
 
 3. Создание виртуального коммутатора (моста) и настройка VLAN
+
 sudo ovs-vsctl add-br hq-sw
 
 Добавляем физические интерфейсы с VLAN-тегированием:
+
 sudo ovs-vsctl add-port hq-sw ens4 tag=100
+
 sudo ovs-vsctl add-port hq-sw ens5 tag=200
+
 sudo ovs-vsctl add-port hq-sw ens6 tag=999
 
 3.2. Добавление внутренних портов (internal) для управления VLAN
+
 sudo ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
+
 sudo ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
+
 sudo ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
 
 3.3. Включение моста и внутренних интерфейсов
+
 sudo ip link set hq-sw up
+
 sudo ip link set vlan100 up
+
 sudo ip link set vlan200 up
+
 sudo ip link set vlan999 up
 
 3.4. Назначение IP-адресов внутренним портам
+
 sudo ip addr add 192.168.100.1/26 dev vlan100
+
 sudo ip addr add 192.168.100.65/28 dev vlan200
+
 sudo ip addr add 192.168.100.81/29 dev vlan999
 
 4. Автоматизация сохранения настроек Open vSwitch после перезагрузки
+   
 4.1. Скрипт восстановления конфигурации
+
 sudo nano /usr/local/sbin/ovs-persistent.sh
-Вставьте следующий код:
 
 #!/bin/bash
 # Удаляем существующий мост, если он есть, для чистой конфигурации
@@ -237,10 +255,13 @@ ip addr add 192.168.100.65/28 dev vlan200 || true
 ip addr add 192.168.100.81/29 dev vlan999 || true
 
 Сохраните файл и сделайте его исполняемым:
+
 sudo chmod +x /usr/local/sbin/ovs-persistent.sh
 
 4.2. Создание systemd‑сервиса
+
 sudo nano /etc/systemd/system/ovs-persistent.service
+
 Вставьте следующее содержимое:
 
 [Unit]
@@ -257,20 +278,27 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 
 Сохраните файл, затем выполните:
+
 sudo systemctl daemon-reload
+
 sudo systemctl enable ovs-persistent.service
+
 sudo systemctl start ovs-persistent.service
 
 Теперь при каждой загрузке системы скрипт автоматически восстановит нужную конфигурацию.
 
 5. Настройка DHCP-сервера для VLAN 200 (для HQ‑CLI)
+   
 Клиент HQ‑CLI должен получать IP-адреса по DHCP из подсети VLAN 200.
 
 5.1. Указание интерфейса для DHCP
+
 sudo nano /etc/default/isc-dhcp-server
+
 INTERFACES="vlan200"
 
 5.2. Конфигурация файла dhcpd.conf
+
 sudo nano /etc/dhcp/dhcpd.conf
 
 subnet 192.168.100.64 netmask 255.255.255.240 {
@@ -284,28 +312,36 @@ subnet 192.168.100.64 netmask 255.255.255.240 {
 }
 
 5.3. Перезапуск DHCP-сервера
+
 sudo systemctl restart isc-dhcp-server
+
 sudo systemctl enable isc-dhcp-server
 
 
-
-
+# Настройка безопасного удаленного доступа на серверах HQ-SRV и BR-SRV
 
 1. Настройка SSH-сервера на HQ-SRV и BR-SRV.
+   
 1.1. Редактирование файла конфигурации SSH
+
 sudo nano /etc/ssh/sshd_config
+
 Port 2024
 
 Разрешение подключения только для пользователя sshuser:
+
 AllowUsers sshuser
 
 Ограничение количества попыток авторизации:
+
 MaxAuthTries 2
 
 Настройка баннера:
-#Banner none
+
 Banner /etc/ssh-banner
-sudo nano /etc/ssh-banner
+
+* sudo nano /etc/ssh-banner *
+
 Впишите строку:
 
 ***********************************************************
