@@ -42,20 +42,14 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 
   1.2. Изменение файла /etc/hosts
 
-sudo nano /etc/hosts
+*     sudo nano /etc/hosts
 
-ISP: 
 *     127.0.1.1       isp.au-team.irpo
-
-HQ-RTR: 127.0.1.1       hq-rtr.au-team.irpo
-
-HQ-SRV: 127.0.1.1       hq-srv.au-team.irpo
-
-HQ-CLI: 127.0.1.1       hq-cli.au-team.irpo
-
-BR-RTR: 127.0.1.1       br-rtr.au-team.irpo
-
-BR-SRV: 127.0.1.1       br-srv.au-team.irpo
+*     127.0.1.1       hq-rtr.au-team.irpo
+*     127.0.1.1       hq-srv.au-team.irpo
+*     127.0.1.1       hq-cli.au-team.irpo
+*     127.0.1.1       br-rtr.au-team.irpo
+*     127.0.1.1       br-srv.au-team.irpo
 
 # 2. Задаем IP адреса сетевым интерфейсам согласно таблицы адресации, nmtui.
 
@@ -103,44 +97,41 @@ BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
 
 
 Проверить результат настройки IP-адресов можно с помощью команд на выбор:
-ip a
-ip –c a
-ip –c –br a
+*     ip –c a
+*     ip –c –br a
 
 # Маршрутизация транзитных IP-пакетов
 
 Включить пересылку пакетов между интерфейсами на ISP, HQ-RTR, BR-RTR.
-nano /etc/sysctl.conf
+*     nano /etc/sysctl.conf
 net.ipv4.ip_forward=1
-sysctl -p
+*     sysctl -p
 
 # Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
 
-iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
+*     iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
 
 Сохранение iptables‑правил
 
-apt update
+*     apt update
 
-apt install iptables-persistent
+*     apt install iptables-persistent
 
 Если впоследствии потребуется сохранить изменённые правила:
 
-sudo iptables-save | sudo tee /etc/iptables/rules.v4
+*     sudo iptables-save | sudo tee /etc/iptables/rules.v4
 
 Проверка iptables‑правил:
 
-sudo iptables -t nat -L -n -v
+*     sudo iptables -t nat -L -n -v
 
 # Создание локальных учетных записей
 
 Создание локальных учетных записей на серверах HQ-SRV и BR-SRV.
 
-sudo useradd sshuser -u 1010 -U
-
-sudo passwd sshuser
-
-P@ssw0rd
+*     sudo useradd sshuser -u 1010 -U
+*     sudo passwd sshuser
+*     P@ssw0rd
 
 Предоставление прав sudo без запроса пароля
 
