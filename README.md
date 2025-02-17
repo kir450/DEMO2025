@@ -66,10 +66,14 @@ BR-SRV: 127.0.1.1       br-srv.au-team.irpo
 Настройка ISP
 
 Internet-ISP ens3 auto
-![image](https://github.com/user-attachments/assets/98e67fa3-fcff-4371-a753-0a8e13697d45)
+![image](https://github.com/user-attachments/assets/e012e0d8-bca7-4fe3-adcd-38017815dd89)
 
 ISP_HQ-RTR ens4 172.16.4.1/28
+![image](https://github.com/user-attachments/assets/07e3d94e-56ac-418b-8c2b-aa2c48651acd)
+
 ISP_BR-RTR ens5 172.16.5.1/28
+![image](https://github.com/user-attachments/assets/7af6319a-6305-4a24-b929-16a23785aab2)
+
 
 Настройка HQ-RTR
 ISP_HQ-RTR ens3 172.16.4.2/28 Шлюз 172.16.4.1 Серверы DNS 77.88.8.8
