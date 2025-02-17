@@ -111,16 +111,20 @@ ip a
 ip –c a
 ip –c –br a
 
+# Маршрутизация транзитных IP-пакетов
+
 Включить пересылку пакетов между интерфейсами на ISP, HQ-RTR, BR-RTR.
 nano /etc/sysctl.conf
 net.ipv4.ip_forward=1
 sysctl -p
 
-Настройка NAT с помощью iptables на ISP, HQ-RTR, BR-RTR.
+# Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
+
 iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
 
 Сохранение iptables‑правил
 apt update
+
 apt install iptables-persistent
 
 Если впоследствии потребуется сохранить изменённые правила:
