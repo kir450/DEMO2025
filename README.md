@@ -171,7 +171,7 @@ sudo visudo
 net_admin ALL=(ALL) NOPASSWD: ALL
 
 
-# Настройка OpenvSwitch на HQ-RTR
+# Настройка на интерфейсе HQ-RTR в сторону офиса HQ виртуального коммутатора:
 
 1. Установка необходимых пакетов
 Обновите списки пакетов и установите Open vSwitch и DHCP-сервер (isc-dhcp-server):
