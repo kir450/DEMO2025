@@ -45,7 +45,7 @@ HQ-CLI: hq-cli.au-team.irpo
 
 BR-SRV: br-srv.au-team.irpo
 
-  1.2 Изменение файла /etc/hosts
+  1.2. Изменение файла /etc/hosts
 
 sudo nano /etc/hosts
 
