@@ -27,9 +27,9 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 | BR-SRV         | ens3      | 192.168.200.2/27  | 192.168.200.1     | BR-RTR_BR-SRV                 |
 
 
-# Настройка имен устройств 
+# 1. Настройка имен устройств 
 
-1.1. Изменение файла /etc/hostname
+  1.1. Изменение файла /etc/hostname
 
 sudo nano /etc/hostname
 
@@ -45,7 +45,7 @@ HQ-CLI: hq-cli.au-team.irpo
 
 BR-SRV: br-srv.au-team.irpo
 
-1.2 Изменение файла /etc/hosts
+  1.2 Изменение файла /etc/hosts
 
 sudo nano /etc/hosts
 
