@@ -176,37 +176,37 @@ net.ipv4.ip_forward=1
 
 Добавляем физические интерфейсы с VLAN-тегированием:
 
-*sudo ovs-vsctl add-port hq-sw ens4 tag=100
+*     sudo ovs-vsctl add-port hq-sw ens4 tag=100
 
-*sudo ovs-vsctl add-port hq-sw ens5 tag=200
+*     sudo ovs-vsctl add-port hq-sw ens5 tag=200
 
-*sudo ovs-vsctl add-port hq-sw ens6 tag=999
+*     sudo ovs-vsctl add-port hq-sw ens6 tag=999
 
 3.2. Добавление внутренних портов (internal) для управления VLAN
 
-*sudo ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
+*     sudo ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
 
-*sudo ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
+*     sudo ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
 
-*sudo ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
+*     sudo ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
 
 3.3. Включение моста и внутренних интерфейсов
 
-*sudo ip link set hq-sw up
+*     sudo ip link set hq-sw up
 
-*sudo ip link set vlan100 up
+*     sudo ip link set vlan100 up
 
-*sudo ip link set vlan200 up
+*     sudo ip link set vlan200 up
 
-*sudo ip link set vlan999 up
+*     sudo ip link set vlan999 up
 
 3.4. Назначение IP-адресов внутренним портам
 
-*sudo ip addr add 192.168.100.1/26 dev vlan100
+*     sudo ip addr add 192.168.100.1/26 dev vlan100
 
-*sudo ip addr add 192.168.100.65/28 dev vlan200
+*     sudo ip addr add 192.168.100.65/28 dev vlan200
 
-*sudo ip addr add 192.168.100.81/29 dev vlan999
+*     sudo ip addr add 192.168.100.81/29 dev vlan999
 
 4. Автоматизация сохранения настроек Open vSwitch после перезагрузки
    
