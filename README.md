@@ -74,10 +74,11 @@ ISP_HQ-RTR ens4 172.16.4.1/28
 ISP_BR-RTR ens5 172.16.5.1/28
 ![image](https://github.com/user-attachments/assets/07e3d94e-56ac-418b-8c2b-aa2c48651acd)
 
-
-
 Настройка HQ-RTR
+
 ISP_HQ-RTR ens3 172.16.4.2/28 Шлюз 172.16.4.1 Серверы DNS 77.88.8.8
+![image](https://github.com/user-attachments/assets/5e7d56e3-e297-4d39-a903-6f47030121fd)
+
 Настройка ens4, ens5, ens6 будет произведена при настройке VLAN
 
 Настройка HQ-SRV
