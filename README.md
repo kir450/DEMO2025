@@ -26,9 +26,10 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 | BR-RTR         | ens4      | 192.168.200.1/27  | -                 | BR-RTR_BR-SRV                 |
 | BR-SRV         | ens3      | 192.168.200.2/27  | 192.168.200.1     | BR-RTR_BR-SRV                 |
 
-sudo nano /etc/hostname
 
-1. Изменение файла /etc/hostname
+# Настройка имен устройств 
+
+Изменение файла /etc/hostname
 sudo nano /etc/hostname
 
 ISP: isp.au-team.irpo
@@ -43,21 +44,20 @@ HQ-CLI: hq-cli.au-team.irpo
 
 BR-SRV: br-srv.au-team.irpo
 
-2. Изменение файла /etc/hosts
-sudo nano /etc/hosts
+Изменение файла /etc/hosts
 
-ISP:
-127.0.1.1       isp.au-team.irpo
-HQ-RTR:
-127.0.1.1       hq-rtr.au-team.irpo
-HQ-SRV:
-127.0.1.1       hq-srv.au-team.irpo
-HQ-CLI:
-127.0.1.1       hq-cli.au-team.irpo
-BR-RTR:
-127.0.1.1       br-rtr.au-team.irpo
-BR-SRV:
-127.0.1.1       br-srv.au-team.irpo
+sudo nano /etc/hosts
+ISP: 127.0.1.1       isp.au-team.irpo
+
+HQ-RTR: 127.0.1.1       hq-rtr.au-team.irpo
+
+HQ-SRV: 127.0.1.1       hq-srv.au-team.irpo
+
+HQ-CLI: 127.0.1.1       hq-cli.au-team.irpo
+
+BR-RTR: 127.0.1.1       br-rtr.au-team.irpo
+
+BR-SRV: 127.0.1.1       br-srv.au-team.irpo
 
 Задаем IP адреса сетевым интерфейсам согласно таблицы адресации.
 nmtui
