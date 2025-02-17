@@ -27,6 +27,47 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 | BR-SRV         | ens3      | 192.168.200.2/27  | 192.168.200.1     | BR-RTR_BR-SRV                 |
 
 
+# Изменение файла /etc/hostname
+sudo nano /etc/hostname
+
+# Вставьте нужное имя (например, для ISP):
+isp.au-team.irpo
+
+# Для HQ-RTR:
+hq-rtr.au-team.irpo
+
+# Для BR-RTR:
+br-rtr.au-team.irpo
+
+# Для HQ-SRV:
+hq-srv.au-team.irpo
+
+# Для HQ-CLI:
+hq-cli.au-team.irpo
+
+# Для BR-SRV:
+br-srv.au-team.irpo
+
+# Изменение файла /etc/hosts
+sudo nano /etc/hosts
+
+# Для ISP:
+127.0.1.1       isp.au-team.irpo
+
+# Для HQ-RTR:
+127.0.1.1       hq-rtr.au-team.irpo
+
+# Для HQ-SRV:
+127.0.1.1       hq-srv.au-team.irpo
+
+# Для HQ-CLI:
+127.0.1.1       hq-cli.au-team.irpo
+
+# Для BR-RTR:
+127.0.1.1       br-rtr.au-team.irpo
+
+# Для BR-SRV:
+127.0.1.1       br-srv.au-team.irpo
 
 
 1. Изменение файла /etc/hostname
