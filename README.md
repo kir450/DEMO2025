@@ -34,8 +34,10 @@ sudo nano /etc/hostname
 
 ISP:
 isp.au-team.irpo
+
 HQ-RTR:
 hq-rtr.au-team.irpo
+
 BR-RTR:
 br-rtr.au-team.irpo
 HQ-SRV:
