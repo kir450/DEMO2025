@@ -30,6 +30,7 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 # Настройка имен устройств 
 
 Изменение файла /etc/hostname
+
 sudo nano /etc/hostname
 
 ISP: isp.au-team.irpo
@@ -47,6 +48,7 @@ BR-SRV: br-srv.au-team.irpo
 Изменение файла /etc/hosts
 
 sudo nano /etc/hosts
+
 ISP: 127.0.1.1       isp.au-team.irpo
 
 HQ-RTR: 127.0.1.1       hq-rtr.au-team.irpo
