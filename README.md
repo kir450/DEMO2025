@@ -30,16 +30,15 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 # 1. Настройка имен устройств.
 
   1.1. Изменение файла /etc/hostname
-
-     sudo nano /etc/hostname
+*     sudo nano /etc/hostname
 
  
-      isp.au-team.irpo
-     hq-rtr.au-team.irpo
-     br-rtr.au-team.irpo
-     hq-srv.au-team.irpo
-     hq-cli.au-team.irpo
-     br-srv.au-team.irpo
+*     isp.au-team.irpo
+*     hq-rtr.au-team.irpo
+*     br-rtr.au-team.irpo
+*     hq-srv.au-team.irpo
+*     hq-cli.au-team.irpo
+*     br-srv.au-team.irpo
 
   1.2. Изменение файла /etc/hosts
 
