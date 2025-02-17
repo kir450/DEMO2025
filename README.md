@@ -26,10 +26,7 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 | BR-RTR         | ens4      | 192.168.200.1/27  | -                 | BR-RTR_BR-SRV                 |
 | BR-SRV         | ens3      | 192.168.200.2/27  | 192.168.200.1     | BR-RTR_BR-SRV                 |
 
-
-<details> <summary>Показать / скрыть команду</summary>
 sudo nano /etc/hostname
-</details>
 
 1. Изменение файла /etc/hostname
 sudo nano /etc/hostname
