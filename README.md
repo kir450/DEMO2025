@@ -17,8 +17,8 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 | -              | ens4      | 172.16.4.1/28     | -                 | ISP_HQ-RTR                    |
 | -              | ens5      | 172.16.5.1/28     | -                 | ISP_BR-RTR                    |
 | HQ-RTR         | ens3      | 172.16.4.2/28     | 172.16.4.1        | ISP_HQ-RTR                    |
-| HQ-RTR         | ens4      | 192.168.100.1/26  | -                 | HQ-RTR_HQ-SRV (VLAN100)       |
-| HQ-RTR         | ens5      | 192.168.100.65/28 | -                 | HQ-RTR_HQ-CLI (VLAN200)       |
+|                | ens4      | 192.168.100.1/26  | -                 | HQ-RTR_HQ-SRV (VLAN100)       |
+|                | ens5      | 192.168.100.65/28 | -                 | HQ-RTR_HQ-CLI (VLAN200)       |
 | HQ-RTR         | ens6      | 192.168.100.81/29 | -                 | VLAN999                       |
 | HQ-SRV         | ens3      | 192.168.100.2/26  | 192.168.100.1     | HQ-RTR_HQ-SRV                 |
 | HQ-CLI         | ens3      | DHCP              | 192.168.100.65    | HQ-RTR_HQ-CLI                 |
