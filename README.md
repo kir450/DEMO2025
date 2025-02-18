@@ -312,9 +312,7 @@ ssh -p 2024 sshuser@<IP_адрес_сервера>
 
 # 6. GRE-туннель между HQ-RTR и BR-RTR
 
-Настройка HQ-RTR
-
-nmtui
+Настройка HQ-RT, nmtui
 ![image](https://github.com/user-attachments/assets/91dae2e8-518d-46cd-ba7d-78894d895776)
 
 
