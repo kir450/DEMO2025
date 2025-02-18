@@ -74,6 +74,7 @@ ISP_HQ-RTR ens3 172.16.4.2/28 Шлюз 172.16.4.1 Серверы DNS 77.88.8.8
 
 HQ-RTR_HQ-SRV ens3 192.168.100.2/26 Шлюз 192.168.100.1 Серверы DNS 77.88.8.8
 ![image](https://github.com/user-attachments/assets/9d175cba-ea1b-4b82-82ff-760767cf0edb)
+![image](https://github.com/user-attachments/assets/1a65eafc-0233-4a9c-bca2-349770dd8074)
 
 
 Настройка HQ-CLI
