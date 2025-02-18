@@ -503,7 +503,8 @@ https://github.com/kir450/D/blob/main/frrbr
 5.3. HQ‑CLI
 
 Если HQ‑CLI получает адреса по DHCP, настройте DHCP-сервер так, чтобы он выдавал 192.168.100.2 в качестве DNS.
-![Uploading image.png…]()
+![image](https://github.com/user-attachments/assets/ff16bef4-8d39-42c5-8732-dc7f0e00df4c)
+
 
 6. Тестирование
    
