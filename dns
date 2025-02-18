@@ -1,0 +1,165 @@
+Настройка DNS на Debian 10 для HQ-SRV
+1. Установка BIND9:
+bash
+Copy
+sudo apt update
+sudo apt install -y bind9 bind9utils dnsutils
+2. Конфигурация /etc/bind/named.conf.options:
+bash
+Copy
+sudo nano /etc/bind/named.conf.options
+Замените содержимое на:
+
+nginx
+Copy
+options {
+    directory "/var/cache/bind";
+    listen-on port 53 { any; };      # Принимать запросы на всех интерфейсах
+    listen-on-v6 { none; };          # Отключить IPv6
+    allow-query { any; };            # Разрешить запросы от всех клиентов
+    recursion yes;
+
+    forwarders {
+        77.88.8.8;                  # DNS Яндекса
+        8.8.8.8;                    # DNS Google
+    };
+
+    dnssec-validation no;           # Отключить DNSSEC
+    auth-nxdomain no;               # Совместимость со старыми клиентами
+};
+3. Объявление зон в /etc/bind/named.conf.local:
+bash
+Copy
+sudo nano /etc/bind/named.conf.local
+Добавьте:
+
+nginx
+Copy
+// Прямая зона
+zone "au-team.irpo" {
+    type master;
+    file "/etc/bind/zones/au-team.db";
+};
+
+// Обратная зона для сети 192.168.100.0/24
+zone "100.168.192.in-addr.arpa" {
+    type master;
+    file "/etc/bind/zones/au-team_rev.db";
+};
+4. Создание файлов зон:
+bash
+Copy
+sudo mkdir /etc/bind/zones
+sudo cp /etc/bind/db.local /etc/bind/zones/au-team.db
+sudo cp /etc/bind/db.127 /etc/bind/zones/au-team_rev.db
+5. Настройка прямой зоны (au-team.db):
+bash
+Copy
+sudo nano /etc/bind/zones/au-team.db
+Содержимое:
+
+nginx
+Copy
+$TTL 86400
+@   IN  SOA hq-srv.au-team.irpo. admin.au-team.irpo. (
+    2024052001  ; Serial
+    3600        ; Refresh
+    1800        ; Retry
+    604800      ; Expire
+    86400       ; Minimum TTL
+)
+
+@       IN  NS  hq-srv.au-team.irpo.
+hq-srv  IN  A   192.168.100.2
+hq-rtr  IN  A   192.168.100.1
+br-srv  IN  A   192.168.200.2
+br-rtr  IN  A   192.168.200.1
+6. Настройка обратной зоны (au-team_rev.db):
+bash
+Copy
+sudo nano /etc/bind/zones/au-team_rev.db
+Содержимое:
+
+nginx
+Copy
+$TTL 86400
+@   IN  SOA hq-srv.au-team.irpo. admin.au-team.irpo. (
+    2024052001  ; Serial
+    3600        ; Refresh
+    1800        ; Retry
+    604800      ; Expire
+    86400       ; Minimum TTL
+)
+
+@       IN  NS  hq-srv.au-team.irpo.
+2.100   IN  PTR hq-srv.au-team.irpo.
+1.100   IN  PTR hq-rtr.au-team.irpo.
+2.200   IN  PTR br-srv.au-team.irpo.
+1.200   IN  PTR br-rtr.au-team.irpo.
+7. Настройка прав доступа:
+bash
+Copy
+sudo chown -R bind:bind /etc/bind/zones
+sudo chmod 0640 /etc/bind/zones/*
+8. Проверка конфигурации:
+bash
+Copy
+sudo named-checkconf
+sudo named-checkzone au-team.irpo /etc/bind/zones/au-team.db
+sudo named-checkzone 100.168.192.in-addr.arpa /etc/bind/zones/au-team_rev.db
+9. Настройка DNS на HQ-SRV:
+Убедитесь, что в /etc/resolv.conf указан локальный DNS:
+
+bash
+Copy
+echo "nameserver 192.168.100.2" | sudo tee /etc/resolv.conf
+10. Запуск и автозагрузка BIND9:
+bash
+Copy
+sudo systemctl restart bind9
+sudo systemctl enable bind9
+Настройка клиентов
+1. BR-SRV:
+bash
+Copy
+echo "nameserver 192.168.100.2" | sudo tee /etc/resolv.conf
+2. HQ-CLI (через DHCP):
+Настройте DHCP-сервер (на HQ-RTR) для выдачи DNS:
+
+ini
+Copy
+# Пример для dnsmasq (/etc/dnsmasq.conf)
+dhcp-option=option:dns-server,192.168.100.2
+Тестирование
+1. Прямой запрос (с HQ-SRV или BR-SRV):
+bash
+Copy
+nslookup hq-rtr.au-team.irpo  # Должен вернуть 192.168.100.1
+nslookup br-srv.au-team.irpo  # Должен вернуть 192.168.200.2
+2. Обратный запрос:
+bash
+Copy
+nslookup 192.168.100.1  # Должен вернуть hq-rtr.au-team.irpo
+nslookup 192.168.200.2  # Должен вернуть br-srv.au-team.irpo
+3. Проверка форвардинга:
+bash
+Copy
+nslookup google.com  # Должен вернуть публичный IP
+Важные отличия для Debian 10
+Пакеты: Вместо bind и bind-utils используется bind9.
+
+Пути конфигов:
+
+Основной конфиг: /etc/bind/named.conf (включает named.conf.options, named.conf.local).
+
+Файлы зон хранятся в /etc/bind/zones.
+
+Служба: Управляется через systemctl (имя службы: bind9).
+
+Права доступа: Владелец файлов зон — bind:bind.
+
+Если возникнут ошибки, проверьте журналы:
+
+bash
+Copy
+sudo journalctl -u bind9 --since "5 minutes ago"
