@@ -32,7 +32,6 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
   1.1. Изменение файла /etc/hostname
 *     sudo nano /etc/hostname
 
- 
 *     isp.au-team.irpo
 *     hq-rtr.au-team.irpo
 *     hq-srv.au-team.irpo
@@ -41,7 +40,7 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 *     br-srv.au-team.irpo
 
   1.2. Изменение файла /etc/hosts
-
+  
 *     sudo nano /etc/hosts
 
 *     127.0.1.1       isp.au-team.irpo
@@ -51,7 +50,7 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 *     127.0.1.1       br-rtr.au-team.irpo
 *     127.0.1.1       br-srv.au-team.irpo
 
-# 2. Задаем IP адреса сетевым интерфейсам согласно таблицы адресации, nmtui.
+ 1.3. Задаем IP адреса сетевым интерфейсам согласно таблицы адресации, nmtui.
 
 Настройка ISP
 
@@ -96,19 +95,18 @@ BR-RTR-BR-SRV ens4 192.168.200.1/27
 BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
 ![image](https://github.com/user-attachments/assets/fde2d2d3-d96d-4dfa-a8ab-54ade00a5f00)
 
-
 Проверить результат настройки IP-адресов можно с помощью команд на выбор:
 *     ip –c a
 *     ip –c –br a
 
-# Маршрутизация транзитных IP-пакетов
+# 1.4 Маршрутизация транзитных IP-пакетов
 
 Включить пересылку пакетов между интерфейсами на ISP, HQ-RTR, BR-RTR.
 *     nano /etc/sysctl.conf
 net.ipv4.ip_forward=1
 *     sysctl -p
 
-# Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
+#  2,8. Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
 
 *     iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
 
@@ -126,7 +124,7 @@ net.ipv4.ip_forward=1
 
 *     sudo iptables -t nat -L -n -v
 
-# Создание локальных учетных записей
+# 3. Создание локальных учетных записей
 
 Создание локальных учетных записей на серверах HQ-SRV и BR-SRV.
 
@@ -141,6 +139,8 @@ net.ipv4.ip_forward=1
 *     sudo visudo
 
 *     sshuser ALL=(ALL) NOPASSWD: ALL
+
+Выполняем вход под пользователем sshuser и выполняем sudo -i
 
 Создание пользователя net_admin на маршрутизаторах HQ‑RTR и BR‑RTR
 
@@ -159,19 +159,19 @@ net.ipv4.ip_forward=1
 *     net_admin ALL=(ALL) NOPASSWD: ALL
 
 
-# Настройка на интерфейсе HQ-RTR в сторону офиса HQ виртуального коммутатора:
+# 4. Настройка на интерфейсе HQ-RTR в сторону офиса HQ виртуального коммутатора:
 
-1. Установка необходимых пакетов
+4.1. Установка необходимых пакетов
 
 *     sudo apt update
 
 *     sudo apt install -y openvswitch-switch isc-dhcp-server
 
-2. Запуск и автозапуск службы Open vSwitch
+4.2. Запуск и автозапуск службы Open vSwitch
 
 *     sudo systemctl enable --now openvswitch-switch
 
-3. Создание виртуального коммутатора (моста) и настройка VLAN
+4.3. Создание виртуального коммутатора (моста) и настройка VLAN
 
 *     sudo ovs-vsctl add-br hq-sw
 
@@ -183,7 +183,7 @@ net.ipv4.ip_forward=1
 
 *     sudo ovs-vsctl add-port hq-sw ens6 tag=999
 
-3.2. Добавление внутренних портов (internal) для управления VLAN
+4.4. Добавление внутренних портов (internal) для управления VLAN
 
 *     sudo ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
 
@@ -191,7 +191,7 @@ net.ipv4.ip_forward=1
 
 *     sudo ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
 
-3.3. Включение моста и внутренних интерфейсов
+4.5. Включение моста и внутренних интерфейсов
 
 *     sudo ip link set hq-sw up
 
@@ -201,7 +201,7 @@ net.ipv4.ip_forward=1
 
 *     sudo ip link set vlan999 up
 
-3.4. Назначение IP-адресов внутренним портам
+4.6. Назначение IP-адресов внутренним портам
 
 *     sudo ip addr add 192.168.100.1/26 dev vlan100
 
@@ -209,9 +209,9 @@ net.ipv4.ip_forward=1
 
 *     sudo ip addr add 192.168.100.81/29 dev vlan999
 
-4. Автоматизация сохранения настроек Open vSwitch после перезагрузки
+4.7. Автоматизация сохранения настроек Open vSwitch после перезагрузки
    
-4.1. Скрипт восстановления конфигурации
+Скрипт восстановления конфигурации
 *     cd /usr/local/sbin
 *     wget https://raw.githubusercontent.com/kir450/D/main/ovs-persistent.sh
 
@@ -219,7 +219,7 @@ net.ipv4.ip_forward=1
 
 *      sudo chmod +x ovs-persistent.sh
 
-4.2. Создание systemd‑сервиса
+Создание systemd‑сервиса
 
 *      cd /etc/systemd/system
 
@@ -235,15 +235,15 @@ net.ipv4.ip_forward=1
 
 Теперь при каждой загрузке системы скрипт автоматически восстановит нужную конфигурацию.
 
-5. Настройка DHCP-сервера для VLAN 200 (для HQ‑CLI)
+9. Настройка DHCP-сервера на HQ-RTR для VLAN 200 (для HQ‑CLI)
 
-5.1. Указание интерфейса для DHCP
+Указание интерфейса для DHCP
 
 *      sudo nano /etc/default/isc-dhcp-server
 
 INTERFACES="vlan200"
 
-5.2. Конфигурация файла dhcpd.conf
+Конфигурация файла dhcpd.conf
 
 *      sudo nano /etc/dhcp/dhcpd.conf
 
@@ -257,18 +257,16 @@ INTERFACES="vlan200"
            max-lease-time 7200;
       }
 
-5.3. Перезапуск DHCP-сервера
+Перезапуск DHCP-сервера
 
 *     sudo systemctl restart isc-dhcp-server
 
 *     sudo systemctl enable isc-dhcp-server
 
 
-# Настройка безопасного удаленного доступа на серверах HQ-SRV и BR-SRV
+# 5. Настройка безопасного удаленного доступа на серверах HQ-SRV и BR-SRV
 
-1. Настройка SSH-сервера на HQ-SRV и BR-SRV.
-   
-1.1. Редактирование файла конфигурации SSH
+Редактирование файла конфигурации SSH
 
 *     sudo nano /etc/ssh/sshd_config
 
@@ -284,7 +282,11 @@ MaxAuthTries 2
 
 Настройка баннера:
 
-*     Banner /etc/ssh-banner
+#Banner none
+
+Banner /etc/ssh-banner
+
+*     /etc/ssh-banner
 
 *     sudo nano /etc/ssh-banner
   
@@ -297,7 +299,7 @@ MaxAuthTries 2
     ********************************************
     
     
-1.3. Перезапуск SSH-сервера
+Перезапуск SSH-сервера
 
 *     sudo systemctl restart sshd
 
@@ -309,7 +311,7 @@ MaxAuthTries 2
 ssh -p 2024 sshuser@<IP_адрес_сервера>
 
 
-# GRE-туннель между HQ-RTR и BR-RTR
+# 6. GRE-туннель между HQ-RTR и BR-RTR
 
 Настройка HQ-RTR
 
@@ -325,6 +327,21 @@ nmtui
 
 Настройка BR-RTR
 ![image](https://github.com/user-attachments/assets/bf1c59f4-6f7d-4082-976e-6d4f4c0401b4)
+
+7. Настройка динамической (внутренней) маршрутизации средствами FRR
+
+*     apt update && apt install -y frr
+*     sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+  
+https://github.com/kir450/D/blob/main/frrhq
+
+https://github.com/kir450/D/blob/main/frrbr
+
+*     systemctl restart frr
+
+*     vtysh -c "show running-config"
+*     vtysh -c "show ip ospf neighbor"
+*     vtysh -c "show ip route"
 
 
 
