@@ -94,7 +94,7 @@ sudo mkdir -p /etc/bind/master
 bash
 Копировать
 Редактировать
-sudo cp /etc/bind/db.localhost /etc/bind/master/au-team.db
+sudo cp /etc/bind/db.local /etc/bind/master/au-team.db
 sudo nano /etc/bind/master/au-team.db
 Пример содержимого (au-team.db):
 
