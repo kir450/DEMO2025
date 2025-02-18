@@ -14,7 +14,7 @@ nginx
 Copy
 options {
     directory "/var/cache/bind";
-    listen-on port 53 { any; };      # Принимать запросы на всех интерфейсах
+    listen-on port 53 { 127.0.0.1; 192.168.100.0/26; 192.168.100.64/28; 192.168.200.0/28; };
     listen-on-v6 { none; };          # Отключить IPv6
     allow-query { any; };            # Разрешить запросы от всех клиентов
     recursion yes;
