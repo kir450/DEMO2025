@@ -347,4 +347,201 @@ https://github.com/kir450/D/blob/main/frrbr
 *     vtysh -c "show ip route"
 
 
+# 10. Настройка DNS для офисов HQ и BR.
 
+
+1. Установка необходимых пакетов
+   
+1.1. Обновите список пакетов и установите bind9, bind9utils, dnsutils:
+
+*     sudo apt update
+*     sudo apt install -y bind9 bind9utils dnsutils
+
+2. Настройка глобальных опций BIND
+   
+2.1. Откройте и отредактируйте файл /etc/bind/named.conf.options:
+
+*     sudo nano /etc/bind/named.conf.options
+* 
+2.2. Пример содержимого:
+
+      options {
+          directory "/var/cache/bind";
+
+          recursion yes;
+  
+          forwarders {
+              77.88.8.8;   // DNS Яндекса
+              8.8.8.8;     // DNS Google
+          };
+
+          dnssec-validation no;
+  
+          listen-on port 53 { 
+              127.0.0.1; 
+              192.168.100.0/26; 
+              192.168.100.64/28; 
+              192.168.200.0/27; 
+          };
+          listen-on-v6 { none; };
+
+          allow-query { any; };
+
+          auth-nxdomain no;
+      };
+  
+  3. Настройка зон (прямая и обратная)
+     
+3.1. Определение зон в named.conf.local
+
+*     sudo nano /etc/bind/named.conf.local
+  
+Добавьте определения для прямой зоны au-team.irpo и обратной зоны (192.168.100.x):
+
+
+    // Прямая зона для домена au-team.irpo
+    zone "au-team.irpo" {
+        type master;
+        file "/etc/bind/master/au-team.db";
+    };
+
+    // Обратная зона для 192.168.100.x
+    zone "100.168.192.in-addr.arpa" {
+        type master;
+        file "/etc/bind/master/au-team_rev.db";
+    };
+
+Сохраните изменения.
+
+3.2. Создание каталога для файлов зон
+
+    sudo mkdir -p /etc/bind/master
+3.3. Прямая зона: au-team.db
+Создайте файл зоны, например, скопировав шаблон:
+
+bash
+Копировать
+Редактировать
+sudo cp /etc/bind/db.local /etc/bind/master/au-team.db
+sudo nano /etc/bind/master/au-team.db
+Пример содержимого (au-team.db):
+
+dns
+Копировать
+Редактировать
+$TTL 1D
+@       IN      SOA     au-team.irpo. root.au-team.irpo. (
+                        0       ; Serial
+                        1D      ; Refresh
+                        1H      ; Retry
+                        1W      ; Expire
+                        3H )    ; Minimum
+
+; Указываем, что NS - au-team.irpo. (или ns.au-team.irpo. - на ваше усмотрение)
+@       IN      NS      au-team.irpo.
+
+; A-запись для самого au-team.irpo. (если DNS-сервер имеет IP 192.168.100.2)
+au-team.irpo.   IN      A       192.168.100.2
+
+; Примеры A-записей (корректируйте под вашу схему)
+hq-rtr          IN      A       192.168.100.1
+hq-srv          IN      A       192.168.100.2
+hq-cli          IN      A       192.168.100.66
+br-rtr          IN      A       192.168.200.1
+br-srv          IN      A       192.168.200.2
+
+; Примеры CNAME-записей
+wiki            IN      CNAME   hq-rtr.au-team.irpo.
+moodle          IN      CNAME   hq-rtr.au-team.irpo.
+Сохраните файл.
+
+3.4. Обратная зона: au-team_rev.db
+Создайте (или скопируйте) файл:
+
+bash
+Копировать
+Редактировать
+sudo cp /etc/bind/db.127 /etc/bind/master/au-team_rev.db
+sudo nano /etc/bind/master/au-team_rev.db
+Пример содержимого (au-team_rev.db), предполагая, что нам нужно обратное разрешение для сети 192.168.100.0/26:
+
+dns
+Копировать
+Редактировать
+$TTL 1D
+@       IN      SOA     au-team.irpo. root.au-team.irpo. (
+                        0       ; Serial
+                        1D      ; Refresh
+                        1H      ; Retry
+                        1W      ; Expire
+                        3H )    ; Minimum
+
+@       IN      NS      au-team.irpo.
+
+; PTR-записи (последний октет IP -> имя хоста)
+1       IN      PTR     hq-rtr.au-team.irpo.
+2       IN      PTR     hq-srv.au-team.irpo.
+66      IN      PTR     hq-cli.au-team.irpo.
+; При необходимости добавьте другие
+Сохраните файл.
+
+3.5. Права и владельцы
+bash
+Копировать
+Редактировать
+sudo chown -R bind:bind /etc/bind/master
+sudo chmod 0640 /etc/bind/master/*
+4. Проверка синтаксиса и перезапуск
+Проверка конфигурации BIND:
+bash
+Копировать
+Редактировать
+sudo named-checkconf
+Если нет ошибок, команда не выведет ничего.
+
+Проверка зон:
+bash
+Копировать
+Редактировать
+sudo named-checkzone au-team.irpo /etc/bind/master/au-team.db
+sudo named-checkzone 100.168.192.in-addr.arpa /etc/bind/master/au-team_rev.db
+Перезапуск BIND9:
+bash
+Копировать
+Редактировать
+sudo systemctl restart bind9
+sudo systemctl enable bind9
+5. Настройка клиентов
+5.1. HQ‑SRV (DNS-сервер)
+Убедитесь, что сам HQ‑SRV использует свой IP как DNS-сервер (например, 192.168.100.2).
+Если используется NetworkManager, задайте это в nmtui или в /etc/resolv.conf (но предпочтительнее настроить через NetworkManager).
+5.2. BR‑SRV
+Укажите в настройках сетевого интерфейса (через nmtui или статический файл конфигурации), что DNS-сервер – 192.168.100.2 (IP HQ‑SRV).
+5.3. HQ‑CLI
+Если HQ‑CLI получает адреса по DHCP, настройте DHCP-сервер так, чтобы он выдавал 192.168.100.2 в качестве DNS.
+Если вручную, пропишите в /etc/resolv.conf (или через nmtui) nameserver 192.168.100.2.
+6. Тестирование
+Проверка прямого разрешения:
+bash
+Копировать
+Редактировать
+host hq-rtr.au-team.irpo
+host wiki.au-team.irpo
+Проверка обратного разрешения:
+bash
+Копировать
+Редактировать
+host 192.168.100.1
+host 192.168.100.66
+nslookup/dig:
+bash
+Копировать
+Редактировать
+nslookup br-srv.au-team.irpo
+dig hq-srv.au-team.irpo
+ping по доменному имени (для проверки, что резолвинг работает в стандартных утилитах):
+bash
+Копировать
+Редактировать
+ping hq-cli.au-team.irpo
+Если всё настроено правильно, HQ‑SRV будет отвечать на запросы из локальных сетей (192.168.100.x, 192.168.200.x), а для остального трафика (неизвестные домены) – перенаправлять (forward) запросы на DNS Яндекса и Google.
