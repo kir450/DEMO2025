@@ -221,7 +221,7 @@ net.ipv4.ip_forward=1
 
 4.2. Создание systemd‑сервиса
 
-/etc/systemd/system
+*      cd /etc/systemd/system
 
 *      wget https://raw.githubusercontent.com/kir450/D/main/ovs-persistent.service
 
