@@ -74,8 +74,6 @@ ISP_HQ-RTR ens3 172.16.4.2/28 Шлюз 172.16.4.1 Серверы DNS 77.88.8.8
 
 HQ-RTR_HQ-SRV ens3 192.168.100.2/26 Шлюз 192.168.100.1 Серверы DNS 77.88.8.8
 ![image](https://github.com/user-attachments/assets/9d175cba-ea1b-4b82-82ff-760767cf0edb)
-![image](https://github.com/user-attachments/assets/1a65eafc-0233-4a9c-bca2-349770dd8074)
-
 
 Настройка HQ-CLI
 
@@ -95,8 +93,6 @@ BR-RTR-BR-SRV ens4 192.168.200.1/27
 
 BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
 ![image](https://github.com/user-attachments/assets/fde2d2d3-d96d-4dfa-a8ab-54ade00a5f00)
-![image](https://github.com/user-attachments/assets/84a4ef15-5927-44ed-9b55-a98fcca0ff50)
-
 
 Проверить результат настройки IP-адресов можно с помощью команд на выбор:
 *     ip –c a
@@ -416,132 +412,157 @@ https://github.com/kir450/D/blob/main/frrbr
 3.2. Создание каталога для файлов зон
 
     sudo mkdir -p /etc/bind/master
+
 3.3. Прямая зона: au-team.db
+
 Создайте файл зоны, например, скопировав шаблон:
 
-bash
-Копировать
-Редактировать
-sudo cp /etc/bind/db.local /etc/bind/master/au-team.db
-sudo nano /etc/bind/master/au-team.db
+*     sudo cp /etc/bind/db.local /etc/bind/master/au-team.db
+*     sudo nano /etc/bind/master/au-team.db
+
 Пример содержимого (au-team.db):
 
-dns
-Копировать
-Редактировать
-$TTL 1D
-@       IN      SOA     au-team.irpo. root.au-team.irpo. (
-                        0       ; Serial
-                        1D      ; Refresh
-                        1H      ; Retry
-                        1W      ; Expire
-                        3H )    ; Minimum
+    $TTL 1D
+    @       IN      SOA     au-team.irpo. root.au-team.irpo. (
+                            0       ; Serial
+                            1D      ; Refresh
+                            1H      ; Retry
+                            1W      ; Expire
+                            3H )    ; Minimum
 
-; Указываем, что NS - au-team.irpo. (или ns.au-team.irpo. - на ваше усмотрение)
-@       IN      NS      au-team.irpo.
 
-; A-запись для самого au-team.irpo. (если DNS-сервер имеет IP 192.168.100.2)
-au-team.irpo.   IN      A       192.168.100.2
+    @       IN      NS      au-team.irpo.
+    au-team.irpo.   IN      A       192.168.100.2
+    hq-rtr          IN      A       192.168.100.1
+    hq-srv          IN      A       192.168.100.2
+    hq-cli          IN      A       192.168.100.66
+    br-rtr          IN      A       192.168.200.1
+    br-srv          IN      A       192.168.200.2
+    wiki            IN      CNAME   hq-rtr.au-team.irpo.
+    moodle          IN      CNAME   hq-rtr.au-team.irpo.
 
-; Примеры A-записей (корректируйте под вашу схему)
-hq-rtr          IN      A       192.168.100.1
-hq-srv          IN      A       192.168.100.2
-hq-cli          IN      A       192.168.100.66
-br-rtr          IN      A       192.168.200.1
-br-srv          IN      A       192.168.200.2
-
-; Примеры CNAME-записей
-wiki            IN      CNAME   hq-rtr.au-team.irpo.
-moodle          IN      CNAME   hq-rtr.au-team.irpo.
 Сохраните файл.
 
 3.4. Обратная зона: au-team_rev.db
+
 Создайте (или скопируйте) файл:
 
-bash
-Копировать
-Редактировать
-sudo cp /etc/bind/db.127 /etc/bind/master/au-team_rev.db
-sudo nano /etc/bind/master/au-team_rev.db
-Пример содержимого (au-team_rev.db), предполагая, что нам нужно обратное разрешение для сети 192.168.100.0/26:
+*     sudo cp /etc/bind/db.127 /etc/bind/master/au-team_rev.db
+*     sudo nano /etc/bind/master/au-team_rev.db
 
-dns
-Копировать
-Редактировать
-$TTL 1D
-@       IN      SOA     au-team.irpo. root.au-team.irpo. (
-                        0       ; Serial
-                        1D      ; Refresh
-                        1H      ; Retry
-                        1W      ; Expire
-                        3H )    ; Minimum
+Пример содержимого (au-team_rev.db):
 
-@       IN      NS      au-team.irpo.
+    $TTL 1D
+    @       IN      SOA     au-team.irpo. root.au-team.irpo. (
+                            0       ; Serial
+                            1D      ; Refresh
+                            1H      ; Retry
+                            1W      ; Expire
+                            3H )    ; Minimum
 
-; PTR-записи (последний октет IP -> имя хоста)
-1       IN      PTR     hq-rtr.au-team.irpo.
-2       IN      PTR     hq-srv.au-team.irpo.
-66      IN      PTR     hq-cli.au-team.irpo.
-; При необходимости добавьте другие
-Сохраните файл.
+    @       IN      NS      au-team.irpo.
+    1       IN      PTR     hq-rtr.au-team.irpo.
+    2       IN      PTR     hq-srv.au-team.irpo.
+    66      IN      PTR     hq-cli.au-team.irpo.
+
+
 
 3.5. Права и владельцы
-bash
-Копировать
-Редактировать
-sudo chown -R bind:bind /etc/bind/master
-sudo chmod 0640 /etc/bind/master/*
+
+
+*     sudo chown -R bind:bind /etc/bind/master
+*     sudo chmod 0640 /etc/bind/master/*
+
 4. Проверка синтаксиса и перезапуск
-Проверка конфигурации BIND:
-bash
-Копировать
-Редактировать
-sudo named-checkconf
+
+*     sudo named-checkconf
 Если нет ошибок, команда не выведет ничего.
 
 Проверка зон:
-bash
-Копировать
-Редактировать
-sudo named-checkzone au-team.irpo /etc/bind/master/au-team.db
-sudo named-checkzone 100.168.192.in-addr.arpa /etc/bind/master/au-team_rev.db
+
+*     sudo named-checkzone au-team.irpo /etc/bind/master/au-team.db
+*     sudo named-checkzone 100.168.192.in-addr.arpa /etc/bind/master/au-team_rev.db
+
 Перезапуск BIND9:
-bash
-Копировать
-Редактировать
-sudo systemctl restart bind9
-sudo systemctl enable bind9
+
+*     sudo systemctl restart bind9
+*     sudo systemctl enable bind9
+
 5. Настройка клиентов
 5.1. HQ‑SRV (DNS-сервер)
-Убедитесь, что сам HQ‑SRV использует свой IP как DNS-сервер (например, 192.168.100.2).
-Если используется NetworkManager, задайте это в nmtui или в /etc/resolv.conf (но предпочтительнее настроить через NetworkManager).
+Убедитесь, что сам HQ‑SRV использует свой IP как DNS-сервер (192.168.100.2).
+![image](https://github.com/user-attachments/assets/1a65eafc-0233-4a9c-bca2-349770dd8074)
+
 5.2. BR‑SRV
-Укажите в настройках сетевого интерфейса (через nmtui или статический файл конфигурации), что DNS-сервер – 192.168.100.2 (IP HQ‑SRV).
+Укажите в настройках сетевого интерфейса (через nmtui), что DNS-сервер – 192.168.100.2.
+![image](https://github.com/user-attachments/assets/84a4ef15-5927-44ed-9b55-a98fcca0ff50)
+
 5.3. HQ‑CLI
+
 Если HQ‑CLI получает адреса по DHCP, настройте DHCP-сервер так, чтобы он выдавал 192.168.100.2 в качестве DNS.
-Если вручную, пропишите в /etc/resolv.conf (или через nmtui) nameserver 192.168.100.2.
+![Uploading image.png…]()
+
 6. Тестирование
-Проверка прямого разрешения:
-bash
-Копировать
-Редактировать
-host hq-rtr.au-team.irpo
-host wiki.au-team.irpo
-Проверка обратного разрешения:
-bash
-Копировать
-Редактировать
-host 192.168.100.1
-host 192.168.100.66
-nslookup/dig:
-bash
-Копировать
-Редактировать
-nslookup br-srv.au-team.irpo
-dig hq-srv.au-team.irpo
-ping по доменному имени (для проверки, что резолвинг работает в стандартных утилитах):
-bash
-Копировать
-Редактировать
-ping hq-cli.au-team.irpo
-Если всё настроено правильно, HQ‑SRV будет отвечать на запросы из локальных сетей (192.168.100.x, 192.168.200.x), а для остального трафика (неизвестные домены) – перенаправлять (forward) запросы на DNS Яндекса и Google.
+   
+Проверяем работу DNS на HQ-SRV с BR-SRV с помощью команды host
+
+*     ping -c4 au-team.irpo
+
+Прямая зона
+
+*     host hq-rtr.au-team.irpo
+      host br-rtr.au-team.irpo
+      host hq-srv.au-team.irpo
+      host hq-cli.au-team.irpo
+      host br-srv.au-team.irpo
+      host moodle.au-team.irpo
+      host wiki.au-team.irpo
+
+Обратная зона
+
+    host 192.168.100.1
+    host 192.168.100.2
+    host 192.168.100.66
+
+Проверка работоспособности DNS с помощью nslookup
+
+*     nslookup рй-rtr.au-team.irpo
+*     nslookup wiki.au-team.irpo
+
+*     nslookup 192.168.100.2
+*     nslookup 192.168.100.66
+
+*     ping hq-cli.au-team.irpo
+*     ping host hq-rtr.au-team.irpo
+*     ping wiki.au-team.irpo
+
+
+# 11. Настройте часовой пояс
+
+Проверяем часовой пояс
+
+*     timedatectl
+
+Список доступных часовых поясов можно посмотреть командой
+
+*     ls /usr/share/zoneinfo/
+
+Посмотреть список регионов и городов
+
+*     ls /usr/share/zoneinfo/Europe/
+
+Настроим Московский часовой пояс (UTC +3):
+
+*     timedatectl set-timezone Europe/Moscow
+
+Изменение даты и времени при необходимости
+
+Для изменения даты и времени используется команда:
+
+timedatectl set-time "<дата> <время>
+
+*     timedatectl set-time "2024-01-01 00:00:00"
+
+Проверка:
+
+*     timedatectl
