@@ -251,7 +251,7 @@ INTERFACES="vlan200"
            range 192.168.100.66 192.168.100.78;
            option routers 192.168.100.65;
            option subnet-mask 255.255.255.240;
-           option domain-name-servers 8.8.8.8, 8.8.4.4;
+           option domain-name-servers 77.88.8.8, 8.8.8.8;
            option broadcast-address 192.168.100.79;
            default-lease-time 600;
            max-lease-time 7200;
