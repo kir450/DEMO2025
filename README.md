@@ -491,6 +491,7 @@ https://github.com/kir450/D/blob/main/frrbr
 5. Настройка клиентов
 5.1. HQ‑SRV (DNS-сервер)
 Убедитесь, что сам HQ‑SRV использует свой IP как DNS-сервер (192.168.100.2).
+
 ![image](https://github.com/user-attachments/assets/1a65eafc-0233-4a9c-bca2-349770dd8074)
 
 5.2. BR‑SRV
