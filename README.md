@@ -528,7 +528,7 @@ https://github.com/kir450/D/blob/main/frrbr
 
 Проверка работоспособности DNS с помощью nslookup
 
-*     nslookup рй-rtr.au-team.irpo
+*     nslookup hq-rtr.au-team.irpo
 *     nslookup wiki.au-team.irpo
 
 *     nslookup 192.168.100.2
