@@ -528,6 +528,9 @@ https://github.com/kir450/D/blob/main/frrbr
 
 Проверка работоспособности DNS с помощью nslookup
 
+*     apt update && apt install dnsutils
+
+
 *     nslookup hq-rtr.au-team.irpo
 *     nslookup wiki.au-team.irpo
 
