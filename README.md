@@ -538,7 +538,7 @@ https://github.com/kir450/D/blob/main/frrbr
 *     nslookup 192.168.100.66
 
 *     ping hq-cli.au-team.irpo
-*     ping host hq-rtr.au-team.irpo
+*     ping hq-rtr.au-team.irpo
 *     ping wiki.au-team.irpo
 
 
