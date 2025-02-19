@@ -532,14 +532,14 @@ https://github.com/kir450/D/blob/main/frrbr
 
 
 *     nslookup hq-rtr.au-team.irpo
-*     nslookup wiki.au-team.irpo
+      nslookup wiki.au-team.irpo
 
 *     nslookup 192.168.100.2
-*     nslookup 192.168.100.66
+      nslookup 192.168.100.66
 
 *     ping hq-cli.au-team.irpo
-*     ping hq-rtr.au-team.irpo
-*     ping wiki.au-team.irpo
+      ping hq-rtr.au-team.irpo
+      ping wiki.au-team.irpo
 
 
 # 11. Настройте часовой пояс
