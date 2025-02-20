@@ -559,3 +559,144 @@ Copy
 vtysh -c "show ip ospf interface tun1"
 vtysh -c "show ip ospf neighbor"
 ip route show
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Ниже приведён пример, как можно вручную ввести эти настройки через vtysh для HQ‑RTR. На BR‑RTR процедура аналогична (с изменением IP‑сетей и router‑id, если требуется).
+
+Шаг 1. Запуск vtysh и вход в режим глобальной конфигурации
+Откройте терминал и запустите vtysh:
+bash
+Копировать
+Редактировать
+sudo vtysh
+Введите команду для входа в режим глобальной конфигурации:
+plaintext
+Копировать
+Редактировать
+hq-rtr.au-team.irpo# configure terminal
+Шаг 2. Настройка hostname (опционально)
+Если требуется задать имя хоста через vtysh, введите:
+
+plaintext
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# hostname hq-rtr.au-team.irpo
+Примечание: Обычно имя хоста задаётся через систему (например, через hostnamectl), а в FRR оно используется только для идентификации в выводе.
+
+Шаг 3. Настройка интерфейса туннеля
+Чтобы включить OSPF-аутентификацию на туннельном интерфейсе (tun1), выполните:
+
+plaintext
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# interface tun1
+hq-rtr.au-team.irpo(tun1)# ip ospf authentication message-digest
+hq-rtr.au-team.irpo(tun1)# ip ospf message-digest-key 1 md5 Test123
+hq-rtr.au-team.irpo(tun1)# exit
+Шаг 4. Настройка процесса OSPF
+Создайте процесс OSPF (номер 1) и объявите сети:
+
+plaintext
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# router ospf 1
+hq-rtr.au-team.irpo(config-router)# network 10.10.0.0/30 area 0
+hq-rtr.au-team.irpo(config-router)# network 192.168.100.0/26 area 0
+hq-rtr.au-team.irpo(config-router)# network 192.168.100.64/28 area 0
+hq-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
+hq-rtr.au-team.irpo(config-router)# exit
+Примечание: Если у вас включён режим multi-instance OSPF (где команда network не поддерживается), вместо этого настройте OSPF непосредственно на нужных интерфейсах, как описано в предыдущем ответе.
+
+Шаг 5. Завершение и сохранение конфигурации
+Выйдите из режима конфигурации и сохраните изменения:
+
+plaintext
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# exit
+hq-rtr.au-team.irpo# write
+hq-rtr.au-team.irpo# exit
+Пример для BR‑RTR
+На BR‑RTR выполните аналогичные шаги (измените IP‑сети и, при необходимости, router‑id):
+
+Запустите vtysh:
+bash
+Копировать
+Редактировать
+sudo vtysh
+Войдите в режим конфигурации:
+plaintext
+Копировать
+Редактировать
+br-rtr.au-team.irpo# configure terminal
+(Опционально) Задайте hostname:
+plaintext
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# hostname br-rtr.au-team.irpo
+Настройте интерфейс туннеля tun1:
+plaintext
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# interface tun1
+br-rtr.au-team.irpo(tun1)# ip ospf authentication message-digest
+br-rtr.au-team.irpo(tun1)# ip ospf message-digest-key 1 md5 Test123
+br-rtr.au-team.irpo(tun1)# exit
+Настройте процесс OSPF:
+plaintext
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# router ospf 1
+br-rtr.au-team.irpo(config-router)# network 10.10.0.0/30 area 0
+br-rtr.au-team.irpo(config-router)# network 192.168.200.0/27 area 0
+br-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
+br-rtr.au-team.irpo(config-router)# exit
+Завершите конфигурацию и сохраните её:
+plaintext
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# exit
+br-rtr.au-team.irpo# write
+br-rtr.au-team.irpo# exit
+Проверка
+После настройки на обоих роутерах проверьте соседство и таблицу маршрутов:
+
+bash
+Копировать
+Редактировать
+vtysh -c "show ip ospf neighbor"
+vtysh -c "show ip route ospf"
