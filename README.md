@@ -404,7 +404,7 @@ ssh -p 2024 sshuser@192.168.100.2
 2.1. Откройте и отредактируйте файл /etc/bind/named.conf.options:
 
 *     sudo nano /etc/bind/named.conf.options
-* 
+  
 2.2. Пример содержимого:
 
       options {
