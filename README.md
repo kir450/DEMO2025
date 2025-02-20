@@ -94,7 +94,8 @@ BR-RTR-BR-SRV ens4 192.168.200.1/27
 BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
 ![image](https://github.com/user-attachments/assets/fde2d2d3-d96d-4dfa-a8ab-54ade00a5f00)
 
-Проверить результат настройки IP-адресов можно с помощью команд на выбор:
+Проверить результат настройки IP-адресов можно с помощью команд:
+
 *     ip –c a
 *     ip –c –br a
 
@@ -105,7 +106,7 @@ BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
 net.ipv4.ip_forward=1
 *     sysctl -p
 
-#  2,8. Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
+# 2,8. Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
 
 *     iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
 
@@ -238,27 +239,29 @@ net.ipv4.ip_forward=1
 
 Указание интерфейса для DHCP
 
-*      sudo nano /etc/default/isc-dhcp-server
+*     sudo nano /etc/default/isc-dhcp-server
 
 INTERFACES="vlan200"
 
 Конфигурация файла dhcpd.conf
 
-*      sudo nano /etc/dhcp/dhcpd.conf
+*     sudo nano /etc/dhcp/dhcpd.conf
 
-*      subnet 192.168.100.64 netmask 255.255.255.240 {
-           range 192.168.100.66 192.168.100.78;
-           option routers 192.168.100.65;
-           option subnet-mask 255.255.255.240;
-           option domain-name-servers 77.88.8.8, 8.8.8.8;
-           option broadcast-address 192.168.100.79;
-           default-lease-time 600;
-           max-lease-time 7200;
+*     subnet 192.168.100.64 netmask 255.255.255.240 {
+          range 192.168.100.66 192.168.100.78;
+          option routers 192.168.100.65; 
+          option subnet-mask 255.255.255.240;
+          option domain-name-servers 77.88.8.8, 8.8.8.8;
+          option broadcast-address 192.168.100.79;
+          default-lease-time 600;
+          max-lease-time 7200;
       }
 
 Перезапуск DHCP-сервера
 
 *     sudo systemctl restart isc-dhcp-server
+
+Автозапуск сервиса isc-dhcp-server
 
 *     sudo systemctl enable isc-dhcp-server
 
@@ -269,19 +272,15 @@ INTERFACES="vlan200"
 
 *     sudo nano /etc/ssh/sshd_config
 
+Заменить порт по умолчанию:
+
 Port 2024
-
-Разрешение подключения только для пользователя sshuser:
-
-AllowUsers sshuser
 
 Ограничение количества попыток авторизации:
 
 MaxAuthTries 2
 
 Настройка баннера:
-
-#Banner none
 
 Banner /etc/ssh-banner
 
@@ -297,7 +296,10 @@ Banner /etc/ssh-banner
     *                                          *
     ********************************************
     
-    
+Разрешение подключения только для пользователя sshuser:
+
+*     AllowUsers sshuser
+
 Перезапуск SSH-сервера
 
 *     sudo systemctl restart sshd
@@ -307,7 +309,7 @@ Banner /etc/ssh-banner
 
 С другого устройства (например, с HQ‑CLI) выполните подключение к серверу по порту 2024:
 
-ssh -p 2024 sshuser@<IP_адрес_сервера>
+ssh -p 2024 sshuser@192.168.100.2
 
 
 # 6. GRE-туннель между HQ-RTR и BR-RTR
@@ -328,7 +330,9 @@ ssh -p 2024 sshuser@<IP_адрес_сервера>
 7. Настройка динамической (внутренней) маршрутизации средствами FRR
 
 *     apt update && apt install -y frr
+
 *     sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+
 Заменить содержимое /etc/frr/frr.conf на HQ-RTR:
 
     frr version 7.5.1
@@ -375,10 +379,13 @@ ssh -p 2024 sshuser@<IP_адрес_сервера>
 
 Перезагрузка:
 *     systemctl restart frr
+
 Проверка:     
 *     vtysh -c "show ip ospf neighbor"
 *     vtysh -c "show ip route"
-оказывает текущую конфигурацию
+
+Просмотр текущей конфигурации:
+
 *     vtysh -c "show running-config"
 
 
@@ -401,29 +408,16 @@ ssh -p 2024 sshuser@<IP_адрес_сервера>
 2.2. Пример содержимого:
 
       options {
-          directory "/var/cache/bind";
-
-          recursion yes;
-  
-          forwarders {
-              77.88.8.8;   // DNS Яндекса
-              8.8.8.8;     // DNS Google
-          };
-
-          dnssec-validation no;
-  
-          listen-on port 53 { 
-              127.0.0.1; 
-              192.168.100.0/26; 
-              192.168.100.64/28; 
-              192.168.200.0/27; 
-          };
-          listen-on-v6 { none; };
-
-          allow-query { any; };
-
-          auth-nxdomain no;
+           directory "/var/cache/bind";
+           recursion yes;
+           forwarders { 77.88.8.8; 8.8.8.8; };
+           dnssec-validation no;
+           listen-on port 53 { 127.0.0.1; 192.168.100.0/26; 192.168.100.64/28; 192.168.200.0/27; };
+           listen-on-v6 { none; };
+           allow-query { any; };
+           auth-nxdomain no;
       };
+
   
   3. Настройка зон (прямая и обратная)
      
@@ -432,7 +426,6 @@ ssh -p 2024 sshuser@<IP_адрес_сервера>
 *     sudo nano /etc/bind/named.conf.local
   
 Добавьте определения для прямой зоны au-team.irpo и обратной зоны (192.168.100.x):
-
 
     // Прямая зона для домена au-team.irpo
     zone "au-team.irpo" {
@@ -450,7 +443,7 @@ ssh -p 2024 sshuser@<IP_адрес_сервера>
 
 3.2. Создание каталога для файлов зон
 
-    sudo mkdir -p /etc/bind/master
+*     sudo mkdir -p /etc/bind/master
 
 3.3. Прямая зона: au-team.db
 
@@ -508,13 +501,13 @@ ssh -p 2024 sshuser@<IP_адрес_сервера>
 
 3.5. Права и владельцы
 
-
 *     sudo chown -R bind:bind /etc/bind/master
 *     sudo chmod 0640 /etc/bind/master/*
 
-4. Проверка синтаксиса и перезапуск
+4.1. Проверка синтаксиса и перезапуск
 
 *     sudo named-checkconf
+
 Если нет ошибок, команда не выведет ничего.
 
 Проверка зон:
@@ -571,7 +564,6 @@ ssh -p 2024 sshuser@<IP_адрес_сервера>
 
 *     apt update && apt install dnsutils
 
-
 *     nslookup hq-rtr.au-team.irpo
       nslookup wiki.au-team.irpo
 
@@ -585,10 +577,14 @@ ssh -p 2024 sshuser@<IP_адрес_сервера>
 
 # 11. Настройте часовой пояс
 
-Проверяем часовой пояс
+Настроим Московский часовой пояс (UTC +3):
+
+*     timedatectl set-timezone Europe/Moscow
+
+Проверка:
 
 *     timedatectl
-
+  
 Список доступных часовых поясов можно посмотреть командой
 
 *     ls /usr/share/zoneinfo/
@@ -597,18 +593,9 @@ ssh -p 2024 sshuser@<IP_адрес_сервера>
 
 *     ls /usr/share/zoneinfo/Europe/
 
-Настроим Московский часовой пояс (UTC +3):
-
-*     timedatectl set-timezone Europe/Moscow
-
-Изменение даты и времени при необходимости
-
 Для изменения даты и времени используется команда:
 
 timedatectl set-time "<дата> <время>
 
 *     timedatectl set-time "2024-01-01 00:00:00"
 
-Проверка:
-
-*     timedatectl
