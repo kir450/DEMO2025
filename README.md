@@ -407,16 +407,16 @@ ssh -p 2024 sshuser@192.168.100.2
 * 
 2.2. Пример содержимого:
 
-      options {
-          directory "/var/cache/bind";
-          recursion yes;
-          forwarders { 77.88.8.8; 8.8.8.8; };
-          dnssec-validation no;
-          listen-on port 53 { 127.0.0.1; 192.168.100.0/26; 192.168.100.64/28; 192.168.200.0/27; };
-          listen-on-v6 { none; };
-          allow-query { any; };
-          auth-nxdomain no;
-      };
+*      options {
+           directory "/var/cache/bind";
+           recursion yes;
+           forwarders { 77.88.8.8; 8.8.8.8; };
+           dnssec-validation no;
+           listen-on port 53 { 127.0.0.1; 192.168.100.0/26; 192.168.100.64/28; 192.168.200.0/27; };
+           listen-on-v6 { none; };
+           allow-query { any; };
+           auth-nxdomain no;
+       };
 
   
   3. Настройка зон (прямая и обратная)
