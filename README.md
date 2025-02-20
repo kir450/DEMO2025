@@ -327,7 +327,7 @@ ssh -p 2024 sshuser@192.168.100.2
 Настройка BR-RTR
 ![image](https://github.com/user-attachments/assets/bf1c59f4-6f7d-4082-976e-6d4f4c0401b4)
 
-7. Настройка динамической (внутренней) маршрутизации средствами FRR
+# 7. Настройка динамической (внутренней) маршрутизации средствами FRR
 
 *     apt update && apt install -y frr
 
