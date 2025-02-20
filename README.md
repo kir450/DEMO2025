@@ -329,16 +329,57 @@ ssh -p 2024 sshuser@<IP_адрес_сервера>
 
 *     apt update && apt install -y frr
 *     sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
-  
-https://github.com/kir450/D/blob/main/frrhq
+Заменить содержимое /etc/frr/frr.conf на HQ-RTR:
 
-https://github.com/kir450/D/blob/main/frrbr
+    frr version 7.5.1
+    frr defaults traditional
+    hostname br-rtr.au-team.irpo
+    log syslog informational
+    no ipv6 forwarding
+    service integrated-vtysh-config
+    !
+    interface tun1
+    ip ospf authentication message-digest
+    ip ospf message-digest-key 1 md5 Test123
+    !
+    router ospf
+    network 10.10.0.0/30 area 0
+    network 192.168.200.0/27 area 0
+    area 0 authentication message-digest
+    !
+    line vty
+    !
 
+Заменить содержимое /etc/frr/frr.conf на BR-RTR:
+
+    frr version 7.5.1
+    frr defaults traditional
+    hostname hq-rtr.au-team.irpo
+    log syslog informational
+    no ipv6 forwarding
+    service integrated-vtysh-config
+    !
+    interface tun1
+    ip ospf authentication message-digest
+    ip ospf message-digest-key 1 md5 Test123
+    !
+    router ospf
+    network 10.10.0.0/30 area 0
+    network 192.168.100.0/26 area 0
+    network 192.168.100.64/28 area 0
+    area 0 authentication message-digest
+    !
+    line vty
+    !
+
+
+Перезагрузка:
 *     systemctl restart frr
-
-*     vtysh -c "show running-config"
+Проверка:     
 *     vtysh -c "show ip ospf neighbor"
 *     vtysh -c "show ip route"
+оказывает текущую конфигурацию
+*     vtysh -c "show running-config"
 
 
 # 10. Настройка DNS для офисов HQ и BR.
