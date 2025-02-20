@@ -416,7 +416,7 @@ ssh -p 2024 sshuser@192.168.100.2
 *     vtysh -c "show running-config"
 </details>
 
-# 10. Настройка DNS для офисов HQ и BR.
+# 10. Настройка DNS для офисов HQ и BR на HQ-SRV.
 <details>
 <summary>Показать/скрыть</summary>
 
