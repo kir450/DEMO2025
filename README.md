@@ -413,8 +413,8 @@ ssh -p 2024 sshuser@192.168.100.2
         recursion yes;
 
         forwarders {
-             77.88.8.8;   // DNS Яндекса
-             8.8.8.8;     // DNS Google
+             77.88.8.8;
+             8.8.8.8;
         };
 
         dnssec-validation no;
