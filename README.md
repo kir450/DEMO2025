@@ -248,7 +248,7 @@ net.ipv4.ip_forward=1
 Теперь при каждой загрузке системы скрипт автоматически восстановит нужную конфигурацию.
 </details>
 
-# 9. Настройка DHCP-сервера на HQ-RTR для VLAN 200 (для HQ‑CLI)
+# 9. Настройка DHCP-сервера на HQ-RTR для VLAN 200
 <details>
 <summary>Показать/скрыть</summary>
  
@@ -266,7 +266,7 @@ INTERFACES="vlan200"
           range 192.168.100.66 192.168.100.78;
           option routers 192.168.100.65; 
           option subnet-mask 255.255.255.240;
-          option domain-name-servers 77.88.8.8, 8.8.8.8;
+          option domain-name-servers 77.88.8.8 ;
           option broadcast-address 192.168.100.79;
           default-lease-time 600;
           max-lease-time 7200;
