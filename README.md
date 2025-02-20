@@ -217,21 +217,21 @@ net.ipv4.ip_forward=1
 
 Сохраните файл и сделайте его исполняемым:
 
-*      sudo chmod +x ovs-persistent.sh
+*     sudo chmod +x ovs-persistent.sh
 
 Создание systemd‑сервиса
 
-*      cd /etc/systemd/system
+*     cd /etc/systemd/system
 
-*      wget https://raw.githubusercontent.com/kir450/D/main/ovs-persistent.service
+*     wget https://raw.githubusercontent.com/kir450/D/main/ovs-persistent.service
 
 Сохраните файл, затем выполните:
 
-*      sudo systemctl daemon-reload
+*     sudo systemctl daemon-reload
 
-*      sudo systemctl enable ovs-persistent.service
+*     sudo systemctl enable ovs-persistent.service
 
-*      sudo systemctl start ovs-persistent.service
+*     sudo systemctl start ovs-persistent.service
 
 Теперь при каждой загрузке системы скрипт автоматически восстановит нужную конфигурацию.
 
