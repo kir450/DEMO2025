@@ -167,7 +167,7 @@ net.ipv4.ip_forward=1
 *     sudo visudo
 
 *     net_admin ALL=(ALL) NOPASSWD: ALL
-
+</details>
 
 # 4. Настройка на интерфейсе HQ-RTR в сторону офиса HQ виртуального коммутатора:
 <details>
