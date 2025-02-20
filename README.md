@@ -108,7 +108,7 @@ BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
 *     nano /etc/sysctl.conf
 net.ipv4.ip_forward=1
 *     sysctl -p
-</details> ```
+</details>
 
 # 2,8. Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
 
