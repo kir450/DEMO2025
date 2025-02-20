@@ -102,7 +102,7 @@ BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
 *     ip –c a
 *     ip –c –br a
 
-# 1.4 Маршрутизация транзитных IP-пакетов
+1.4 Маршрутизация транзитных IP-пакетов
 
 Включить пересылку пакетов между интерфейсами на ISP, HQ-RTR, BR-RTR.
 *     nano /etc/sysctl.conf
@@ -110,7 +110,10 @@ net.ipv4.ip_forward=1
 *     sysctl -p
 </details>
 
+
 # 2,8. Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
+<details>
+<summary>Показать/скрыть</summary>
 
 *     iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
 
@@ -127,9 +130,12 @@ net.ipv4.ip_forward=1
 Проверка iptables‑правил:
 
 *     sudo iptables -t nat -L -n -v
+</details>
 
 # 3. Создание локальных учетных записей на HQ-SRV и BR-SRV, HQ‑RTR и BR‑RTR
-
+<details>
+<summary>Показать/скрыть</summary>
+ 
 Создание локальных учетных записей на серверах HQ-SRV и BR-SRV.
 
 *     sudo useradd sshuser -u 1010 -U
@@ -164,7 +170,9 @@ net.ipv4.ip_forward=1
 
 
 # 4. Настройка на интерфейсе HQ-RTR в сторону офиса HQ виртуального коммутатора:
-
+<details>
+<summary>Показать/скрыть</summary>
+ 
 4.1. Установка необходимых пакетов
 
 *     sudo apt update
@@ -236,11 +244,14 @@ net.ipv4.ip_forward=1
 *     sudo systemctl enable ovs-persistent.service
 
 *     sudo systemctl start ovs-persistent.service
+</details>
 
 Теперь при каждой загрузке системы скрипт автоматически восстановит нужную конфигурацию.
 
 # 9. Настройка DHCP-сервера на HQ-RTR для VLAN 200 (для HQ‑CLI)
-
+<details>
+<summary>Показать/скрыть</summary>
+ 
 Указание интерфейса для DHCP
 
 *     sudo nano /etc/default/isc-dhcp-server
@@ -268,10 +279,12 @@ INTERFACES="vlan200"
 Автозапуск сервиса isc-dhcp-server
 
 *     sudo systemctl enable isc-dhcp-server
-
+</details>
 
 # 5. Настройка безопасного удаленного доступа на серверах HQ-SRV и BR-SRV
-
+<details>
+<summary>Показать/скрыть</summary>
+ 
 Редактирование файла конфигурации SSH
 
 *     sudo nano /etc/ssh/sshd_config
@@ -314,10 +327,12 @@ Banner /etc/ssh-banner
 С другого устройства (например, с HQ‑CLI) выполните подключение к серверу по порту 2024:
 
 ssh -p 2024 sshuser@192.168.100.2
-
+</details>
 
 # 6. GRE-туннель между HQ-RTR и BR-RTR
-
+<details>
+<summary>Показать/скрыть</summary>
+ 
 Настройка HQ-RT, nmtui
 ![image](https://github.com/user-attachments/assets/91dae2e8-518d-46cd-ba7d-78894d895776)
 
@@ -330,9 +345,12 @@ ssh -p 2024 sshuser@192.168.100.2
 
 Настройка BR-RTR
 ![image](https://github.com/user-attachments/assets/bf1c59f4-6f7d-4082-976e-6d4f4c0401b4)
+</details>
 
 # 7. Настройка динамической (внутренней) маршрутизации средствами FRR
-
+<details>
+<summary>Показать/скрыть</summary>
+ 
 *     apt update && apt install -y frr
 
 *     sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
@@ -391,10 +409,11 @@ ssh -p 2024 sshuser@192.168.100.2
 Просмотр текущей конфигурации:
 
 *     vtysh -c "show running-config"
-
+</details>
 
 # 10. Настройка DNS для офисов HQ и BR.
-
+<details>
+<summary>Показать/скрыть</summary>
 
 1. Установка необходимых пакетов
    
@@ -591,10 +610,12 @@ ssh -p 2024 sshuser@192.168.100.2
 *     ping hq-cli.au-team.irpo
       ping hq-rtr.au-team.irpo
       ping wiki.au-team.irpo
-
+</details>
 
 # 11. Настройте часовой пояс
-
+<details>
+<summary>Показать/скрыть</summary>
+ 
 Настроим Московский часовой пояс (UTC +3):
 
 *     timedatectl set-timezone Europe/Moscow
@@ -616,4 +637,4 @@ ssh -p 2024 sshuser@192.168.100.2
 timedatectl set-time "<дата> <время>
 
 *     timedatectl set-time "2024-01-01 00:00:00"
-
+</details>
