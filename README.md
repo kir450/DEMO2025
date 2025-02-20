@@ -244,9 +244,9 @@ net.ipv4.ip_forward=1
 *     sudo systemctl enable ovs-persistent.service
 
 *     sudo systemctl start ovs-persistent.service
-</details>
 
 Теперь при каждой загрузке системы скрипт автоматически восстановит нужную конфигурацию.
+</details>
 
 # 9. Настройка DHCP-сервера на HQ-RTR для VLAN 200 (для HQ‑CLI)
 <details>
