@@ -909,6 +909,8 @@ pool 2.debian.pool.ntp.org iburst
 
 Отредактируйте файл /etc/chrony/chrony.conf на клиентах:
 
+*     nano /etc/chrony/chrony.conf
+
 Закомментируйте или удалите существующие строки с pool ….
 
 Добавьте строку, указывающую на HQ‑RTR как NTP‑сервер. Если IP HQ‑RTR равен 192.168.100.1, добавьте:
