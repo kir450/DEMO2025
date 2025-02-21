@@ -659,9 +659,9 @@ timedatectl set-time "<дата> <время>
 
 1.1. Создайте три файла по 1 ГБ:
 
-       sudo dd if=/dev/zero of=/root/disk1.img bs=1M count=1024
-       sudo dd if=/dev/zero of=/root/disk2.img bs=1M count=1024
-       sudo dd if=/dev/zero of=/root/disk3.img bs=1M count=1024
+    sudo dd if=/dev/zero of=/root/disk1.img bs=1M count=1024
+    sudo dd if=/dev/zero of=/root/disk2.img bs=1M count=1024
+    sudo dd if=/dev/zero of=/root/disk3.img bs=1M count=1024
 
 Эти команды создадут файлы /root/disk1.img, /root/disk2.img и /root/disk3.img размером по 1 ГБ каждый.
 
@@ -669,9 +669,9 @@ timedatectl set-time "<дата> <время>
 
 2.1. Создайте loop-устройства из созданных файлов:
 
-       sudo losetup -fP /root/disk1.img
-       sudo losetup -fP /root/disk2.img
-       sudo losetup -fP /root/disk3.img
+    sudo losetup -fP /root/disk1.img
+    sudo losetup -fP /root/disk2.img
+    sudo losetup -fP /root/disk3.img
 
 2.2. Проверьте, какие loop-устройства появились:
 
