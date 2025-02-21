@@ -1,0 +1,216 @@
+1. Настройка доменного контроллера Samba на BR‑SRV
+1.1. Установка необходимых пакетов
+На машине BR‑SRV выполните:
+
+bash
+Копировать
+Редактировать
+sudo apt update
+sudo apt install -y samba samba-ad-dc winbind libpam-winbind libnss-winbind libpam-krb5 krb5-config krb5-user krb5-kdc
+1.2. Остановка и маскирование ненужных служб
+Чтобы избежать конфликтов с классическими службами Samba и Kerberos, остановите и замаскируйте следующие службы:
+
+bash
+Копировать
+Редактировать
+sudo systemctl stop winbind smbd nmbd krb5-kdc
+sudo systemctl mask winbind smbd nmbd krb5-kdc
+1.3. Удаление старой конфигурации Samba
+Если существует файл /etc/samba/smb.conf, удалите его:
+
+bash
+Копировать
+Редактировать
+sudo rm /etc/samba/smb.conf
+1.4. Провизия домена
+Выполните провизию домена с помощью samba-tool. Опция --user-rfc2307 нужна для поддержки UID/GID:
+
+bash
+Копировать
+Редактировать
+sudo samba-tool domain provision --use-rfc2307
+В ходе провизии введите следующие параметры (пример):
+
+Realm: AU-TEAM.IRPO
+Domain: AUTEAM (NetBIOS имя)
+DNS backend: SAMBA_INTERNAL
+Пароль администратора: введите надёжный пароль
+После успешной провизии файл /etc/samba/smb.conf будет создан с базовой конфигурацией.
+
+1.5. Настройка файла конфигурации Samba
+Откройте файл /etc/samba/smb.conf для редактирования:
+
+bash
+Копировать
+Редактировать
+sudo nano /etc/samba/smb.conf
+В секции [global] убедитесь, что присутствуют параметры, например:
+
+ini
+Копировать
+Редактировать
+[global]
+   workgroup = AUTEAM
+   realm = AU-TEAM.IRPO
+   netbios name = BR-SRV
+   server role = active directory domain controller
+   dns forwarder = 8.8.8.8
+Сохраните изменения и выйдите.
+
+1.6. Запуск Samba AD DC
+Размаскируйте и запустите службу доменного контроллера:
+
+bash
+Копировать
+Редактировать
+sudo systemctl unmask samba-ad-dc
+sudo systemctl enable --now samba-ad-dc
+Проверьте статус:
+
+bash
+Копировать
+Редактировать
+sudo systemctl status samba-ad-dc
+2. Создание пользователей и группы для офиса HQ
+2.1. Создание группы hq
+На BR‑SRV выполните:
+
+bash
+Копировать
+Редактировать
+sudo samba-tool group add hq
+2.2. Создание 5 пользователей с именами формата usr#.hq
+Создайте пользователей (пример для первого пользователя, повторите для остальных с изменением имени и пароля):
+
+bash
+Копировать
+Редактировать
+sudo samba-tool user create usr1.hq "SecurePassword1" --home-directory=/home/AUTEAM/usr1.hq --uid=usr1.hq
+sudo samba-tool group addmembers hq usr1.hq
+Повторите для usr2.hq, usr3.hq, usr4.hq и usr5.hq, задавая соответствующие пароли.
+
+2.3. (Опционально) Добавьте группу hq в дополнительные группы, если требуется
+Например:
+
+bash
+Копировать
+Редактировать
+sudo samba-tool group addmembers "Account Operators" hq
+sudo samba-tool group addmembers "Allowed RODC Password Replication Group" hq
+Перезапустите Samba AD DC:
+
+bash
+Копировать
+Редактировать
+sudo systemctl restart samba-ad-dc
+3. Присоединение клиентской машины HQ‑CLI к домену
+На машине HQ‑CLI выполните следующие шаги:
+
+3.1. Установка необходимых пакетов
+bash
+Копировать
+Редактировать
+sudo apt update
+sudo apt install -y realmd sssd adcli sssd-tools packagekit
+3.2. Присоединение к домену
+Выполните:
+
+bash
+Копировать
+Редактировать
+sudo realm join -U usr1.hq AU-TEAM.IRPO
+При запросе введите пароль, указанный для пользователя usr1.hq.
+
+3.3. Разрешение членства группы hq для аутентификации
+bash
+Копировать
+Редактировать
+sudo realm permit -g hq
+4. Настройка политики повышения привилегий (sudo) на HQ‑CLI
+На клиентской машине HQ‑CLI создайте файл для настройки sudo:
+
+bash
+Копировать
+Редактировать
+sudo nano /etc/sudoers.d/hq
+Вставьте следующую строку:
+
+perl
+Копировать
+Редактировать
+%hq ALL=(ALL) NOPASSWD: /bin/cat, /bin/grep, /usr/bin/id
+Сохраните файл. Теперь пользователи, входящие в группу hq, смогут использовать sudo только для команд cat, grep и id.
+
+5. Импорт пользователей из файла CSV на BR‑SRV
+5.1. Подготовка файла CSV
+Создайте файл /opt/users.csv на BR‑SRV, содержащий, например, строки вида:
+
+Копировать
+Редактировать
+usr6.hq,SecurePassword6,hq
+usr7.hq,SecurePassword7,hq
+usr8.hq,SecurePassword8,hq
+Каждая строка содержит: имя пользователя, пароль и имя группы.
+
+5.2. Создание скрипта импорта
+Создайте скрипт /opt/import_users.sh:
+
+bash
+Копировать
+Редактировать
+sudo nano /opt/import_users.sh
+Вставьте следующий код:
+
+bash
+Копировать
+Редактировать
+#!/bin/bash
+
+CSV_FILE="/opt/users.csv"
+
+while IFS=, read -r username password group; do
+    # Создание пользователя
+    sudo samba-tool user create "$username" "$password" --home-directory="/home/$username" --uid="$username"
+    # Добавление пользователя в группу
+    sudo samba-tool group addmembers "$group" "$username"
+done < "$CSV_FILE"
+Сохраните файл и сделайте его исполняемым:
+
+bash
+Копировать
+Редактировать
+sudo chmod +x /opt/import_users.sh
+Запустите скрипт:
+
+bash
+Копировать
+Редактировать
+sudo /opt/import_users.sh
+6. Итоговая проверка
+6.1. На BR‑SRV
+Проверьте статус Samba AD DC:
+
+bash
+Копировать
+Редактировать
+sudo systemctl status samba-ad-dc
+Просмотрите список пользователей и групп:
+
+bash
+Копировать
+Редактировать
+sudo samba-tool user list
+sudo samba-tool group list
+6.2. На HQ‑CLI
+Проверьте, что машина успешно присоединилась к домену:
+
+bash
+Копировать
+Редактировать
+realm list
+Проверьте, что пользователи группы hq могут аутентифицироваться и использовать sudo для команд cat, grep и id:
+
+bash
+Копировать
+Редактировать
+sudo -l
