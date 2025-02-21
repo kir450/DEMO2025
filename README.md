@@ -695,6 +695,14 @@ timedatectl set-time "<дата> <время>
 *     cat /proc/mdstat
 *     sudo mdadm -D /dev/md0
 
+Чтобы при перезагрузке система автоматически собирала массив, сохраните конфигурацию mdadm:
+
+*     sudo mdadm --detail --scan --verbose | sudo tee /etc/mdadm.conf
+
+Обновите initramfs, чтобы изменения вступили в силу:
+
+*     sudo update-initramfs -u
+
 4. Форматирование и монтирование RAID-массива
 
 4.1. Создайте файловую систему ext4 на массиве:
@@ -721,7 +729,9 @@ timedatectl set-time "<дата> <время>
 *     sudo nano /etc/fstab
 
 Добавьте строку:
+
 *     /dev/md0    /raid5    ext4    defaults    0    0
+
 Сохраните и выйдите.
 
 5. Настройка NFS-сервера на HQ-SRV
@@ -732,7 +742,6 @@ timedatectl set-time "<дата> <время>
 *     sudo apt install -y nfs-kernel-server
 
 5.2. Создайте папку для общего доступа:
-
 
 *     sudo mkdir /raid5/nfs
 
@@ -767,6 +776,7 @@ timedatectl set-time "<дата> <время>
 6.3. Смонтируйте шару NFS:
 
 *     sudo mount -t nfs 192.168.100.2:/raid5/nfs /mnt/nfs
+
 (Замените 192.168.100.2 на IP-адрес HQ-SRV, если он отличается.)
 
 6.4. Добавьте запись в /etc/fstab для автоматического монтирования:
