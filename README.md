@@ -913,7 +913,7 @@ pool 2.debian.pool.ntp.org iburst
 
 Добавьте строку, указывающую на HQ‑RTR как NTP‑сервер. Если IP HQ‑RTR равен 192.168.100.1, добавьте:
 
-*     server 172.16.4.2 iburst
+*     server 192.168.100.1 iburst
 
 Примените изменения:
 
