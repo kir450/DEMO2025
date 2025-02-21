@@ -845,3 +845,83 @@ timedatectl set-time "<дата> <время>
 *     df -h | grep /mnt/nfs
 </details>
 
+# 3. Настройка NTP сервера на HQ-RTR
+<details>
+<summary>Показать/скрыть</summary>
+
+
+1. Устоновка chrony
+
+*     apt install chrony
+
+
+2. Редактирование конфигурационного файла chrony
+
+*     sudo nano /etc/chrony/chrony.conf
+
+Внесите следующие изменения (пример для HQ‑RTR как NTP‑сервера):
+
+    server 127.0.0.1 iburst prefer
+    local stratum 5
+    allow 192.168.100.0/26
+    allow 192.168.100.64/28
+    allow 192.168.200.0/27
+
+
+Закомментируйте внешние источники времени, если хотите работать только с локальным источником.
+pool 2.debian.pool.ntp.org iburst
+
+2. Применение изменений
+Перезапустите службу chrony, чтобы новые настройки вступили в силу:
+
+*     sudo systemctl restart chrony
+      sudo systemctl enable chrony
+
+Проверьте статус службы:
+*     sudo systemctl status chrony
+
+3. Проверка работы NTP-сервера
+
+На HQ‑RTR выполните:
+
+Проверка источников времени:
+
+*     chronyc sources
+
+В выводе вы должны увидеть, что сервер использует локальный источник (локальные часы) с заданным stratum 5.
+
+Проверка подключённых клиентов:
+
+Если на HQ‑RTR есть NTP-клиенты, можно выполнить:
+
+*     chronyc clients
+
+Это покажет, какие устройства синхронизируются с вашим сервером.
+
+4. Настройка клиентов
+
+На машинах-клиентах (HQ‑SRV, HQ‑CLI, BR‑RTR, BR‑SRV):
+
+Установите chrony (если ещё не установлен):
+
+*     sudo apt update
+      sudo apt install -y chrony
+
+Отредактируйте файл /etc/chrony/chrony.conf на клиентах:
+
+Закомментируйте или удалите существующие строки с pool ….
+
+Добавьте строку, указывающую на HQ‑RTR как NTP‑сервер. Если IP HQ‑RTR равен 192.168.100.1, добавьте:
+
+*     server 172.16.4.2 iburst
+
+Примените изменения:
+
+*     sudo systemctl restart chrony
+      sudo systemctl enable chrony
+
+Проверьте, что клиент синхронизируется с вашим NTP‑сервером:
+
+*     chronyc sources
+
+</details>
