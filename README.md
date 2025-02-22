@@ -940,3 +940,57 @@ pool 2.debian.pool.ntp.org iburst
 *     chronyc sources
 
 </details>
+
+
+# 4. Сконфигурируйте ansible на сервере BR-SRV
+<details>
+ <summary>Показать/скрыть</summary>
+
+
+1.Заходим под пользователем sshuser
+
+*     su sshuser
+
+2. Установка Ansible на BR‑SRV
+
+*     sudo apt install -y ansible
+
+2. Создание пары SSH‑ключей
+
+*     ssh-keygen -t rsa
+
+В результате в каталоге /home/sshuser/.ssh будут созданы файлы ключей:
+
+*     ls -l ~/.ssh
+
+id_rsa – закрытый ключ
+id_rsa.pub – открытый ключ
+
+3. Копирование SSH‑ключей на удалённые хосты
+
+Для HQ‑SRV (SSH-сервер на порту 2024):
+*     ssh-copy-id -p 2024 sshuser@192.168.100.2
+Для HQ‑CLI:
+*     ssh-copy-id user@192.168.100.66
+Для HQ‑RTR:
+*     ssh-copy-id net_admin@172.16.4.2
+Для BR‑RTR:
+*     ssh-copy-id net_admin@172.16.5.2
+
+4. Откройте файл для редактирования:
+*     sudo nano /etc/ansible/demo
+
+Пример содержимого файла инвентаря:
+
+*     [HQ]
+      192.168.100.2 ansible_port=2024 ansible_user=sshuser
+      192.168.100.66 ansible_user=user
+      172.16.4.2 ansible_user=net_admin
+
+      [BR]
+      172.16.5.2 ansible_user=net_admin
+
+5. Запуск команд с пользовательским инвентарем
+
+*     ansible all -i /etc/ansible/demo -m ping
+
