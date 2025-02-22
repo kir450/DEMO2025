@@ -994,3 +994,4 @@ id_rsa.pub – открытый ключ
 
 *     ansible all -i /etc/ansible/demo -m ping
 
+</details>
