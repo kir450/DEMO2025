@@ -143,7 +143,7 @@ net.ipv4.ip_forward=1
  
 Создание локальных учетных записей на серверах HQ-SRV и BR-SRV.
 
-*     sudo useradd sshuser -u 1010 -U
+*     sudo useradd -m -u 1010 -s /bin/bash sshuser
 *     sudo passwd sshuser
 *     P@ssw0rd
 
@@ -159,7 +159,7 @@ net.ipv4.ip_forward=1
 
 Создание пользователя net_admin на маршрутизаторах HQ‑RTR и BR‑RTR
 
-*     sudo useradd net_admin -U
+*     sudo useradd -m -s /bin/bash net_admin
 
 *     sudo passwd net_admin
 
