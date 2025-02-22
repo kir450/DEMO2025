@@ -669,7 +669,7 @@ timedatectl set-time "<дата> <время>
 <details>
 <summary>Показать/скрыть</summary>
 
-![image](https://tenor.com/ru/view/runie-ruse-runie-ruse-chibi-loading-gif-3269004943611241847)
+![image](http://каб-220.рф/demo_red-os/loading.gif)
 
 </details>
 
