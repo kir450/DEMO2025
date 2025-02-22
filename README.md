@@ -665,11 +665,15 @@ timedatectl set-time "<дата> <время>
 
 
 
+
+
+
 # 1. Настройте доменный контроллер Samba на машине BR-SRV.
 <details>
 <summary>Показать/скрыть</summary>
 
-![image](http://каб-220.рф/demo_red-os/loading.gif)
+![runie-ruse](https://github.com/user-attachments/assets/7d510e38-7e3f-4c2e-a5fe-b556833056ec)
+
 
 </details>
 
