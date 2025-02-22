@@ -1,3 +1,17 @@
+[HQ]
+hq-srv ansible_host=192.168.100.2 ansible_port=2024 ansible_user=sshuser
+hq-cli ansible_host=192.168.100.X ansible_user=user
+hq-rtr ansible_host=172.16.4.2 ansible_user=net_admin
+
+[BR]
+br-rtr ansible_host=172.16.5.2 ansible_user=net_admin
+
+
+
+
+
+
+
 Шаг 1. Подготовка на BR‑SRV (источнике ключей)
 1.1. Убедитесь, что для пользователя sshuser создан домашний каталог и у него правильные права
 Если вы планируете генерировать ключи для пользователя sshuser на BR‑SRV, необходимо убедиться, что его домашний каталог существует и имеет корректные права. Если каталог отсутствует или права неверны, выполните следующие команды от имени root:
