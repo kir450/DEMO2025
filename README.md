@@ -286,7 +286,7 @@ INTERFACES="vlan200"
 *     sudo systemctl enable isc-dhcp-server
 </details>
 
-# 5. Настройка безопасного удаленного доступа на серверах HQ-SRV и BR-SRV
+# 5. Настройка безопасного удаленного доступа по SSH на серверах HQ-SRV и BR-SRV
 <details>
 <summary>Показать/скрыть</summary>
  
