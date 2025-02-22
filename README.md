@@ -648,10 +648,30 @@ timedatectl set-time "<дата> <время>
 </details>
 
 
+
+
+
+
+
+
+
+
+
+
+
 # МОДУЛЬ 2. (Демо-2025 СиСА)
 
 
 
+
+
+# 1. Настройте доменный контроллер Samba на машине BR-SRV.
+<details>
+<summary>Показать/скрыть</summary>
+
+![image](https://tenor.com/ru/view/runie-ruse-runie-ruse-chibi-loading-gif-3269004943611241847)
+
+</details>
 
 # 2. Сконфигурируйте файловое хранилище на HQ-SRV 
 
