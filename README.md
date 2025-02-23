@@ -1084,7 +1084,7 @@ id_rsa.pub – открытый ключ
           volumes:
             - dbvolume:/var/lib/mariadb
       
-       volumes:
+      volumes:
          dbvolume:
            external: true
          images: {}
