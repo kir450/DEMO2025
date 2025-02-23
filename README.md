@@ -1179,16 +1179,18 @@ id_rsa.pub – открытый ключ
 
 Делаем проброс порта 80 при обращение на внешний интерфейс BR-RTR (ens3) на порт 8080 BR-SRV
 
-*     sudo iptables -t nat -A PREROUTING -i ens18 -p tcp --dport 80 -j DNAT --to-destination 192.168.200.2:8080
+*     sudo iptables -t nat -A PREROUTING -d 172.16.5.2 -p tcp --dport 80 -j DNAT --to-destination 192.168.200.2:8080
 
 Проброс порта 2024 на маршрутизаторе BR-RTR в порт 2024 на BR-SRV
 
-*     sudo iptables -t nat -A PREROUTING -i ens18 -p tcp --dport 2024 -j DNAT --to-destination 192.168.200.2:2024
+*     sudo iptables -t nat -A PREROUTING -d 172.16.5.2 -p tcp --dport 2024 -j DNAT --to-destination 192.168.200.2:2024
 
 С HQ-CLI в браузере переходим по IP адресу (WAN) BR-RTR должны попасть на страницу MediaWiki
 
 *     http://172.16.5.2
 
 С HQ-CLI подключаемся по ssh к BR-RTR по порту 2024
+
 *     ssh sshuser@172.16.5.2 -p 2024
+
 </details>
