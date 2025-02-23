@@ -1,3 +1,215 @@
+Инструкция по настройке доменного контроллера Samba на BR-SRV
+1. Подготовка окружения
+BR-SRV: Debian 10, IP: 192.168.200.2, DNS: 192.168.100.2 (HQ-SRV).
+
+HQ-CLI: Debian 10, получает IP через DHCP (VLAN200).
+
+Доменное имя: au-team.irpo.
+
+2. Установка Samba в качестве доменного контроллера
+bash
+Copy
+# Обновление системы и установка пакетов
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y samba krb5-user winbind smbclient
+Настройка Kerberos (укажите при запросе):
+
+Copy
+Default Kerberos version 5 realm: AU-TEAM.IRPO
+Kerberos servers: br-srv.au-team.irpo
+Administrative server: br-srv.au-team.irpo
+3. Создание домена
+bash
+Copy
+# Создание домена
+sudo mv /etc/samba/smb.conf /etc/samba/smb.conf.bak
+sudo samba-tool domain provision \
+  --realm=AU-TEAM.IRPO \
+  --domain=AU-TEAM \
+  --adminpass=MyAdminPass123! \
+  --server-role=dc \
+  --use-rfc2307
+
+# Запуск служб
+sudo systemctl stop smbd nmbd winbind
+sudo systemctl unmask samba-ad-dc
+sudo systemctl enable samba-ad-dc
+sudo systemctl start samba-ad-dc
+4. Создание группы hq
+bash
+Copy
+sudo samba-tool group add hq
+5. Импорт пользователей из файла /opt/users.csv
+5.1. Создайте файл /opt/users.csv:
+
+csv
+Copy
+Username,Password
+user1.hq,P@ssw0rd1
+user2.hq,P@ssw0rd2
+user3.hq,P@ssw0rd3
+user4.hq,P@ssw0rd4
+user5.hq,P@ssw0rd5
+5.2. Скрипт для импорта:
+
+bash
+Copy
+sudo nano /opt/import_users.sh
+Содержимое скрипта:
+
+bash
+Copy
+#!/bin/bash
+tail -n +2 /opt/users.csv | while IFS=, read -r user pass; do
+  sudo samba-tool user create "$user" "$pass"
+  sudo samba-tool group addmembers hq "$user"
+done
+Запуск:
+
+bash
+Copy
+sudo chmod +x /opt/import_users.sh
+sudo /opt/import_users.sh
+6. Настройка прав sudo для группы hq
+bash
+Copy
+echo '%hq ALL=(ALL) NOPASSWD: /bin/cat, /bin/grep, /usr/bin/id' | sudo tee /etc/sudoers.d/hq
+sudo chmod 440 /etc/sudoers.d/hq
+sudo visudo -cf /etc/sudoers.d/hq  # Проверка синтаксиса
+7. Присоединение HQ-CLI к домену
+На HQ-CLI:
+
+bash
+Copy
+# Установка утилит
+sudo apt install -y realmd sssd oddjob-mkhomedir
+
+# Присоединение к домену
+sudo realm join --user=Administrator au-team.irpo
+Пароль администратора: MyAdminPass123!.
+
+8. Проверка работоспособности
+На BR-SRV:
+
+bash
+Copy
+# Список пользователей
+sudo samba-tool user list
+
+# Проверка группы
+sudo samba-tool group listmembers hq
+
+# Тест аутентификации
+smbclient -L localhost -U user1.hq
+На HQ-CLI:
+
+bash
+Copy
+# Проверка домена
+sudo realm list
+
+# Тест входа и прав
+su - user1.hq
+sudo cat /etc/passwd  # Должно работать
+sudo apt update       # Должно быть запрещено
+9. Дополнительные настройки
+Синхронизация времени:
+
+bash
+Copy
+sudo timedatectl set-ntp true
+Фаервол:
+
+bash
+Copy
+sudo ufw allow 135,139,445,389,636/tcp
+sudo ufw allow 53,88,123,137,138/udp
+Итог
+Домен AU-TEAM.IRPO настроен на BR-SRV.
+
+Пользователи user1.hq–user5.hq созданы и добавлены в группу hq.
+
+Группе hq разрешено выполнять cat, grep, id через sudo.
+
+HQ-CLI присоединен к домену.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 1. Установка Docker и docker-compose (Debian 10)
 1.1. Установка Docker CE:
 Следуйте официальным инструкциям для установки Docker на Debian. Пример:
