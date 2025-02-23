@@ -1,13 +1,131 @@
-[HQ]
-hq-srv ansible_host=192.168.100.2 ansible_port=2024 ansible_user=sshuser
-hq-cli ansible_host=192.168.100.X ansible_user=user
-hq-rtr ansible_host=172.16.4.2 ansible_user=net_admin
+Полная инструкция по настройке доменного контроллера Samba на BR-SRV
+1. Подготовка окружения
+BR-SRV: Debian 10, IP: 192.168.200.2, DNS: 192.168.100.2 (HQ-SRV).
 
-[BR]
-br-rtr ansible_host=172.16.5.2 ansible_user=net_admin
+HQ-CLI: Debian 10, получает IP по DHCP из VLAN200.
 
+Доменное имя: au-team.irpo.
 
+2. Установка Samba в режиме доменного контроллера
+bash
+Copy
+# Обновление системы и установка пакетов
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y samba krb5-user winbind smbclient
 
+# Настройка Kerberos (укажите доменное имя)
+sudo nano /etc/krb5.conf
+Ответы при настройке Kerberos:
+
+Copy
+Default Kerberos version 5 realm: AU-TEAM.IRPO
+Kerberos servers: br-srv.au-team.irpo
+Administrative server: br-srv.au-team.irpo
+3. Создание домена
+bash
+Copy
+# Резервное копирование конфига
+sudo mv /etc/samba/smb.conf /etc/samba/smb.conf.bak
+
+# Создание домена
+sudo samba-tool domain provision \
+  --realm=AU-TEAM.IRPO \
+  --domain=AU-TEAM \
+  --adminpass=MyAdminPass123! \
+  --server-role=dc \
+  --use-rfc2307
+
+# Запуск служб
+sudo systemctl stop smbd nmbd winbind
+sudo systemctl unmask samba-ad-dc
+sudo systemctl enable samba-ad-dc
+sudo systemctl start samba-ad-dc
+4. Создание группы hq
+bash
+Copy
+sudo samba-tool group add hq
+5. Импорт пользователей из файла /opt/users.csv
+5.1. Создайте файл /opt/users.csv:
+
+csv
+Copy
+Username,Password
+user1.hq,P@ssw0rd1
+user2.hq,P@ssw0rd2
+user3.hq,P@ssw0rd3
+user4.hq,P@ssw0rd4
+user5.hq,P@ssw0rd5
+5.2. Импорт пользователей:
+
+bash
+Copy
+sudo samba-tool user import /opt/users.csv --csv
+
+# Добавление всех пользователей из CSV в группу hq
+awk -F, 'NR>1 {print $1}' /opt/users.csv | while read user; do
+  sudo samba-tool group addmembers hq "$user"
+done
+6. Настройка прав sudo для группы hq
+bash
+Copy
+# Создайте файл правил sudo
+echo '%hq ALL=(ALL) NOPASSWD: /bin/cat, /bin/grep, /usr/bin/id' | sudo tee /etc/sudoers.d/hq
+sudo chmod 440 /etc/sudoers.d/hq
+
+# Проверка синтаксиса
+sudo visudo -cf /etc/sudoers.d/hq
+7. Присоединение HQ-CLI к домену
+На HQ-CLI:
+
+bash
+Copy
+# Установка утилит
+sudo apt install -y realmd sssd oddjob-mkhomedir
+
+# Присоединение к домену
+sudo realm join --user=Administrator au-team.irpo
+Пароль администратора: MyAdminPass123!.
+
+8. Проверка работоспособности
+На BR-SRV:
+
+bash
+Copy
+# Список пользователей
+sudo samba-tool user list
+
+# Проверка группы
+sudo samba-tool group listmembers hq
+
+# Тест аутентификации
+smbclient -L localhost -U user1.hq
+На HQ-CLI:
+
+bash
+Copy
+# Проверка домена
+sudo realm list
+
+# Вход под пользователем
+su - user1.hq
+
+# Проверка прав
+sudo cat /etc/passwd  # Разрешено
+sudo apt update       # Запрещено
+9. Устранение неполадок
+Ошибки DNS: Убедитесь, что BR-SRV указан как DNS-сервер на HQ-CLI.
+
+Синхронизация времени:
+
+bash
+Copy
+sudo timedatectl set-ntp true
+Фаервол: Разрешите трафик для доменных служб:
+
+bash
+Copy
+sudo ufw allow 135,139,445,389,636/tcp
+sudo ufw allow 53,88,123,137,138/udp
 
 
 
