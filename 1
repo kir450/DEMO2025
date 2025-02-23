@@ -83,6 +83,49 @@ volumes:
 
 
 
+
+
+
+
+
+ services:
+  MediaWiki:
+    container_name: wiki
+    image: mediawiki
+    restart: always
+    ports: 
+      - 8080:80 
+    links:
+      - database
+    volumes:
+      - images:/var/www/html/images
+      # - ./LocalSettings.php:/var/www/html/LocalSettings.php
+  database:
+    container_name: mariadb 
+    image: mariadb  
+    environment:
+      MYSQL_DATABASE: mediawiki
+      MYSQL_USER: wiki
+      MYSQL_PASSWORD: WikiP@ssw0rd 
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+    volumes:
+      - dbvolume:/var/lib/mariadb 
+volumes:
+  dbvolume:
+      external: true
+  images:   
+
+
+
+
+
+
+
+
+
+
+
+
 Пояснения:
 
 mariadb – контейнер базы данных с созданием базы mediawiki и пользователем wiki с паролем WikiP@ssw0rd. Хранение данных осуществляется в volume dbvolume.
