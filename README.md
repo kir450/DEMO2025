@@ -1103,6 +1103,7 @@ id_rsa.pub – открытый ключ
 Для просмотра списка контейнеров вводим команду sudo docker ps. Позволяет смотреть как запущенные контейнеры Docker, так и все контейнеры, которые есть в системе.
 
 Переходим на HQ-CLI в браузере по адресу http://192.168.200.2:8080 (IP BR-SRV) для продолжения установки через веб-интерфейс - нажимаем set up the wiki:
+
 ![image](https://github.com/user-attachments/assets/478908b5-8e5a-407e-96cd-31699dad61e4)
 
 Выбираем необходимый Язык - жмем Далее:
@@ -1110,15 +1111,19 @@ id_rsa.pub – открытый ключ
 ![image](https://github.com/user-attachments/assets/bdc2cf9f-3191-4290-91a4-d83c50bf30e1)
 
 После успешной проверки внешней среды - жмем Далее:
+
 ![image](https://github.com/user-attachments/assets/62324f16-fe9a-488c-a639-038a0a84e976)
 
 Заполняем параметры подключение к БД в соответствие с заданными переменными окружения в wiki.yml, которые соответствуют заданию:
+
 ![image](https://github.com/user-attachments/assets/6e4706a2-70b8-473f-bfee-41d1b03815a5)
 
 Ставим галочку и жмем далее
+
 ![image](https://github.com/user-attachments/assets/4cfa818a-1c2f-47b2-9e98-cceebd3a91e1)
 
 Вносим необходимые сведения:
+
 ![image](https://github.com/user-attachments/assets/90b93a56-e265-414f-991a-7265dd585677)
 
 Передача LocalSettings.php на BR-SRV
@@ -1133,6 +1138,7 @@ id_rsa.pub – открытый ключ
 *     docker-compose -f wiki.yml up -d
 
 Проверяем доступ к Wiki http://192.168.200.2:8080
+
 ![image](https://github.com/user-attachments/assets/b572adc1-3f80-4cd2-b55d-fad77040124d)
 
 Входим под пользователя wiki с паролем WikiP@ssw0rd:
