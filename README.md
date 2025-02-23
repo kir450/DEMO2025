@@ -1106,6 +1106,7 @@ id_rsa.pub – открытый ключ
 ![image](https://github.com/user-attachments/assets/478908b5-8e5a-407e-96cd-31699dad61e4)
 
 Выбираем необходимый Язык - жмем Далее:
+
 ![image](https://github.com/user-attachments/assets/bdc2cf9f-3191-4290-91a4-d83c50bf30e1)
 
 После успешной проверки внешней среды - жмем Далее:
