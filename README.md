@@ -1020,3 +1020,130 @@ id_rsa.pub – открытый ключ
 *     ansible all -i /etc/ansible/demo -m ping
 
 </details>
+
+
+# 5. Развертывание приложений (MediaWiki) в Docker на сервере BR-SRV.
+<details>
+ <summary>Показать/скрыть</summary>
+
+ 1.1. Установка Docker CE:
+
+*     sudo apt update
+*     sudo apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
+*     curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+*     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+*     sudo apt update
+*     sudo apt install -y docker-ce docker-ce-cli containerd.io
+
+1.2. Установка docker-compose:
+*     sudo apt install -y docker-compose
+
+1.3. Запуск и автозапуск Docker:
+*     sudo systemctl enable --now docker
+
+Проверьте статус:
+*     sudo systemctl status docker
+
+Для получения информации об установленном docker:
+*     docker info
+
+2. Установка MediaWiki
+
+Для облегчения создания wiki.yml подключаемся по SSH к BR-SRV с HQ-CLI.
+
+*     ssh sshuser@192.168.200.2 -p 2024
+
+Для упрощения создания wiki.yml в поисковой системе (Яндекс) на HQ-CLI пишем mediawiki docker-compose и переходим по ссылке. На странице находим раздел Adding a Database Server.
+
+*     cd /home/sshuser
+*     nano wiki.yml
+
+*     version: "3.3"
+
+      services:
+        wiki:
+          container_name: wiki
+          image: mediawiki:latest
+          restart: always
+          ports:
+            - "8080:80"
+          depends_on:
+            - mariadb
+          volumes:
+            - images:/var/www/html/images
+            # - ./LocalSettings.php:/var/www/html/LocalSettings.php
+
+        mariadb:
+          container_name: mariadb
+          image: mariadb:latest
+          restart: always
+          environment:
+            MYSQL_DATABASE: mediawiki
+            MYSQL_USER: wiki
+            MYSQL_PASSWORD: WikiP@ssw0rd
+            MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+          volumes:
+            - dbvolume:/var/lib/mariadb
+      
+       volumes:
+         dbvolume:
+           external: true
+         images: {}
+
+
+Чтобы отдельный volume для хранения базы данных имел правильное имя - создаём его средствами docker:
+*     sudo docker volume create dbvolume
+
+Посмотреть все тмеющиеся volume можно командой
+*     sudo docker volume ls
+
+Выполняем сборку и запуск стека контейнеров с приложением MediaWiki и базой данных описанных в файле wiki.yml:
+*     sudo docker-compose -f wiki.yml up -d
+
+Для просмотра списка контейнеров вводим команду sudo docker ps. Позволяет смотреть как запущенные контейнеры Docker, так и все контейнеры, которые есть в системе.
+
+Переходим на HQ-CLI в браузере по адресу http://192.168.200.2:8080 (IP BR-SRV) для продолжения установки через веб-интерфейс - нажимаем set up the wiki:
+![image](https://github.com/user-attachments/assets/478908b5-8e5a-407e-96cd-31699dad61e4)
+Выбираем необходимый Язык - жмем Далее:
+![image](https://github.com/user-attachments/assets/bdc2cf9f-3191-4290-91a4-d83c50bf30e1)
+После успешной проверки внешней среды - жмем Далее:
+![image](https://github.com/user-attachments/assets/62324f16-fe9a-488c-a639-038a0a84e976)
+Заполняем параметры подключение к БД в соответствие с заданными переменными окружения в wiki.yml, которые соответствуют заданию:
+![image](https://github.com/user-attachments/assets/6e4706a2-70b8-473f-bfee-41d1b03815a5)
+Ставим галочку и жмем далее
+![image](https://github.com/user-attachments/assets/4cfa818a-1c2f-47b2-9e98-cceebd3a91e1)
+Вносим необходимые сведения:
+![image](https://github.com/user-attachments/assets/90b93a56-e265-414f-991a-7265dd585677)
+
+Передача LocalSettings.php на BR-SRV
+
+*     scp -P 2024 /root/Downloads/LocalSettings.php sshuser@192.168.200.2:/home/sshuser
+
+Раскомментируем строку # - ./LocalSettings.php:/var/www/html/LocalSettings.php в файле wiki.yml :
+*     nano wiki.yml
+
+Перезапускаем сервисы средствами docker-compose:
+*     docker-compose -f wiki.yml stop
+*     docker-compose -f wiki.yml up -d
+
+Проверяем доступ к Wiki http://192.168.200.2:8080
+![image](https://github.com/user-attachments/assets/b572adc1-3f80-4cd2-b55d-fad77040124d)
+
+Входим под пользователя wiki с паролем WikiP@ssw0rd:
+
+Очистка (опционально)
+Чтобы удалить/очистить все данные Docker (контейнеры, образы, тома и сети), можно выполнить следующие команды:
+
+*     sudo docker stop $(sudo docker ps -qa)
+      sudo docker rm $(sudo docker ps -qa)
+      sudo docker rmi -f $(sudo docker images -qa)
+      sudo docker volume rm $(sudo docker volume ls -q)
+      sudo docker network rm $(sudo docker network ls -q)
+      sudo docker system prune -f
+Команды не должны выводить какие-либо элементы:
+*     docker ps -a
+      docker images -a
+      docker volume ls
+
+
+</details>
