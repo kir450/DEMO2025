@@ -1,3 +1,214 @@
+1. Установка Docker и docker-compose (Debian 10)
+1.1. Установка Docker CE:
+Следуйте официальным инструкциям для установки Docker на Debian. Пример:
+
+bash
+Копировать
+Редактировать
+sudo apt update
+sudo apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io
+1.2. Установка docker-compose:
+
+bash
+Копировать
+Редактировать
+sudo apt install -y docker-compose
+1.3. Запуск и автозапуск Docker:
+
+bash
+Копировать
+Редактировать
+sudo systemctl enable --now docker
+Проверьте статус:
+
+bash
+Копировать
+Редактировать
+sudo systemctl status docker
+2. Создание файла docker-compose (wiki.yml)
+2.1. Перейдите в домашний каталог пользователя (например, sshuser) на BR‑SRV:
+
+bash
+Копировать
+Редактировать
+cd /home/sshuser
+2.2. Создайте файл wiki.yml:
+
+bash
+Копировать
+Редактировать
+nano wiki.yml
+2.3. Вставьте следующее содержимое (отредактируйте пути и переменные, если необходимо):
+
+yaml
+Копировать
+Редактировать
+version: "3.7"
+
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass         # можно изменить, если требуется
+      MYSQL_DATABASE: mediawiki
+      MYSQL_USER: wiki
+      MYSQL_PASSWORD: WikiP@ssw0rd
+    volumes:
+      - dbvolume:/var/lib/mysql
+    networks:
+      - mediawiki_net
+
+  wiki:
+    image: mediawiki:latest
+    container_name: wiki
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      # Пример переменных, которые использует MediaWiki для подключения к БД:
+      MEDIAWIKI_DB_TYPE: mariadb
+      MEDIAWIKI_DB_HOST: mariadb
+      MEDIAWIKI_DB_NAME: mediawiki
+      MEDIAWIKI_DB_USER: wiki
+      MEDIAWIKI_DB_PASSWORD: WikiP@ssw0rd
+    volumes:
+      # Монтирование файла LocalSettings.php, который вы получите после установки MediaWiki
+      - /home/sshuser/LocalSettings.php:/var/www/html/LocalSettings.php
+    networks:
+      - mediawiki_net
+
+volumes:
+  dbvolume:
+
+networks:
+  mediawiki_net:
+Пояснения:
+
+mariadb – контейнер базы данных с созданием базы mediawiki и пользователем wiki с паролем WikiP@ssw0rd. Хранение данных осуществляется в volume dbvolume.
+wiki – контейнер с MediaWiki, который будет доступен извне по порту 8080 (на стороне контейнера используется порт 80). Переменные окружения передают параметры подключения к базе данных.
+Файл LocalSettings.php будет смонтирован из /home/sshuser/LocalSettings.php в контейнер (это позволит, после завершения установки через веб-интерфейс, сохранить настройки на хосте).
+Сохраните файл (Ctrl+O, Enter, Ctrl+X).
+
+3. Создание volume для базы данных
+На BR‑SRV выполните:
+
+bash
+Копировать
+Редактировать
+sudo docker volume create dbvolume
+Проверьте:
+
+bash
+Копировать
+Редактировать
+sudo docker volume ls
+4. Развертывание стека контейнеров
+В каталоге, где находится файл wiki.yml, выполните:
+
+bash
+Копировать
+Редактировать
+sudo docker-compose -f wiki.yml up -d
+Проверьте, что контейнеры запущены:
+
+bash
+Копировать
+Редактировать
+sudo docker ps
+5. Настройка MediaWiki через веб-интерфейс
+5.1. Откройте браузер на клиентской машине (например, HQ‑CLI) и перейдите по адресу:
+
+cpp
+Копировать
+Редактировать
+http://<IP BR-SRV>:8080
+где <IP BR-SRV> — IP-адрес сервера BR‑SRV (например, 192.168.200.2, если указан в таблице адресации).
+
+5.2. Следуйте инструкциям установщика MediaWiki:
+
+Выберите язык.
+Проверьте внешнее подключение.
+Введите параметры подключения к базе данных, используя:
+Хост БД: mariadb
+Имя базы: mediawiki
+Пользователь: wiki
+Пароль: WikiP@ssw0rd
+Продолжите установку.
+5.3. После успешной установки MediaWiki будет сгенерирован файл LocalSettings.php. Скачайте его на HQ‑CLI и передайте на BR‑SRV в каталог /home/sshuser, где находится файл wiki.yml.
+
+Пример копирования с HQ‑CLI (если используется scp):
+
+bash
+Копировать
+Редактировать
+scp -P 2024 /path/to/LocalSettings.php sshuser@<IP BR-SRV>:/home/sshuser/
+(Замените <IP BR-SRV> и порт, если необходимо.)
+
+6. Обновление стека
+После того как файл LocalSettings.php размещен в /home/sshuser на BR‑SRV, перезапустите стек контейнеров, чтобы изменения вступили в силу:
+
+bash
+Копировать
+Редактировать
+sudo docker-compose -f wiki.yml stop
+sudo docker-compose -f wiki.yml up -d
+Проверьте доступность MediaWiki, перейдя в браузере по адресу:
+
+cpp
+Копировать
+Редактировать
+http://<IP BR-SRV>:8080
+7. Очистка (опционально)
+Чтобы удалить/очистить все данные Docker (контейнеры, образы, тома и сети), можно выполнить следующие команды:
+
+bash
+Копировать
+Редактировать
+sudo docker stop $(sudo docker ps -qa)
+sudo docker rm $(sudo docker ps -qa)
+sudo docker rmi -f $(sudo docker images -qa)
+sudo docker volume rm $(sudo docker volume ls -q)
+sudo docker network rm $(sudo docker network ls -q)
+sudo docker system prune -f
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Полная инструкция по настройке доменного контроллера Samba на BR-SRV
 1. Подготовка окружения
 BR-SRV: Debian 10, IP: 192.168.200.2, DNS: 192.168.100.2 (HQ-SRV).
