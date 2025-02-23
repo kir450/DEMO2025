@@ -1133,8 +1133,8 @@ id_rsa.pub – открытый ключ
 *     nano wiki.yml
 
 Перезапускаем сервисы средствами docker-compose:
-*     docker-compose -f wiki.yml stop
-*     docker-compose -f wiki.yml up -d
+*     sudo docker-compose -f wiki.yml stop
+*     sudo docker-compose -f wiki.yml up -d
 
 Проверяем доступ к Wiki http://192.168.200.2:8080
 
