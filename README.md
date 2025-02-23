@@ -673,7 +673,6 @@ timedatectl set-time "<дата> <время>
 <details>
 <summary>Показать/скрыть</summary>
 
-![runie-ruse](https://github.com/user-attachments/assets/7d510e38-7e3f-4c2e-a5fe-b556833056ec)
 
 
 </details>
@@ -1158,4 +1157,38 @@ id_rsa.pub – открытый ключ
       docker volume ls
 
 
+</details>
+
+# 6. На маршрутизаторах HQ-RTR и BR-RTR сконфигурируйте статическую трансляцию портов.
+<details>
+ <summary>Показать/скрыть</summary>
+
+Проброс порта 2024 на маршрутизаторе HQ-RTR в порт 2024 на HQ-SRV
+
+*     sudo iptables -t nat -A PREROUTING -i ens3 -p tcp --dport 2024 -j DNAT --to-destination 192.168.100.2:2024
+
+Проверка с HQ-CLI подключаемся по ssh к HQ-RTR по порту 2024
+
+*     ssh sshuser@172.16.4.2 -p 2024
+Должны попасть на HQ-SRV
+
+Сохранение правил после перезагрузки
+
+*     sudo iptables-save | sudo tee /etc/iptables/rules.v4
+
+
+Делаем проброс порта 80 при обращение на внешний интерфейс BR-RTR (ens3) на порт 8080 BR-SRV
+
+*     sudo iptables -t nat -A PREROUTING -i ens18 -p tcp --dport 80 -j DNAT --to-destination 192.168.200.2:8080
+
+Проброс порта 2024 на маршрутизаторе BR-RTR в порт 2024 на BR-SRV
+
+*     sudo iptables -t nat -A PREROUTING -i ens18 -p tcp --dport 2024 -j DNAT --to-destination 192.168.200.2:2024
+
+С HQ-CLI в браузере переходим по IP адресу (WAN) BR-RTR должны попасть на страницу MediaWiki
+
+*     http://172.16.5.2
+
+С HQ-CLI подключаемся по ssh к BR-RTR по порту 2024
+*     ssh sshuser@172.16.5.2 -p 2024
 </details>
