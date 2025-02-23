@@ -17,6 +17,33 @@ sudo apt install -y samba krb5-user winbind smbclient
 sudo nano /etc/krb5.conf
 Ответы при настройке Kerberos:
 
+[libdefaults]
+    default_realm = AU-TEAM.IRPO
+    dns_lookup_realm = false
+    dns_lookup_kdc = true
+    ticket_lifetime = 24h
+    renew_lifetime = 7d
+    forwardable = true
+
+[realms]
+    AU-TEAM.IRPO = {
+        kdc = br-srv.au-team.irpo
+        admin_server = br-srv.au-team.irpo
+        default_domain = au-team.irpo
+    }
+
+[domain_realm]
+    .au-team.irpo = AU-TEAM.IRPO
+    au-team.irpo = AU-TEAM.IRPO
+
+[logging]
+    kdc = FILE:/var/log/krb5/kdc.log
+    admin_server = FILE:/var/log/krb5/admin.log
+    default = FILE:/var/log/krb5/krb5lib.log
+
+
+
+    
 Copy
 Default Kerberos version 5 realm: AU-TEAM.IRPO
 Kerberos servers: br-srv.au-team.irpo
