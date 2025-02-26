@@ -41,22 +41,22 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 *     sudo nano /etc/hostname
 
 *     isp.au-team.irpo
-*     hq-rtr.au-team.irpo
-*     hq-srv.au-team.irpo
-*     hq-cli.au-team.irpo
-*     br-rtr.au-team.irpo
-*     br-srv.au-team.irpo
+      hq-rtr.au-team.irpo
+      hq-srv.au-team.irpo
+      hq-cli.au-team.irpo
+      br-rtr.au-team.irpo
+      br-srv.au-team.irpo
 
   1.2. Изменение файла /etc/hosts
   
 *     sudo nano /etc/hosts
 
 *     127.0.1.1       isp.au-team.irpo
-*     127.0.1.1       hq-rtr.au-team.irpo
-*     127.0.1.1       hq-srv.au-team.irpo
-*     127.0.1.1       hq-cli.au-team.irpo
-*     127.0.1.1       br-rtr.au-team.irpo
-*     127.0.1.1       br-srv.au-team.irpo
+      127.0.1.1       hq-rtr.au-team.irpo
+      127.0.1.1       hq-srv.au-team.irpo
+      127.0.1.1       hq-cli.au-team.irpo
+      127.0.1.1       br-rtr.au-team.irpo
+      127.0.1.1       br-srv.au-team.irpo
 
  1.3. Задаем IP адреса сетевым интерфейсам согласно таблицы адресации, nmtui.
 
