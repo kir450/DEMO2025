@@ -318,7 +318,7 @@ Banner /etc/ssh-banner
 
 *     AllowUsers sshuser
 
-Впишите строку:
+Создайте файл SSH-баннера:
 
 *     sudo nano /etc/ssh-banner
 
