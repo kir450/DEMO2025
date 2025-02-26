@@ -124,9 +124,9 @@ net.ipv4.ip_forward=1
 
 Сохранение iptables‑правил
 
-*     apt update
+*     apt update -y
 
-*     apt install iptables-persistent
+*     apt install iptables-persistent -y
 
 Если впоследствии потребуется сохранить изменённые правила:
 
