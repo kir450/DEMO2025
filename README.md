@@ -100,7 +100,8 @@ BR-RTR-BR-SRV ens4 192.168.200.1/27
 Настройка BR-SRV
 
 BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
-![image](https://github.com/user-attachments/assets/fde2d2d3-d96d-4dfa-a8ab-54ade00a5f00)
+![image](https://github.com/user-attachments/assets/1a19f283-1d7c-41e1-a2fd-6f3dbc8e35c0)
+
 
 Проверить результат настройки IP-адресов можно с помощью команд:
 
