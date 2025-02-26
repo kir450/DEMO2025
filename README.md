@@ -108,18 +108,21 @@ BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
 *     ip –c a
 *     ip –c –br a
 
-1.4 Маршрутизация транзитных IP-пакетов
+
+</details>
+
+# 2,8. Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
+<details>
+<summary>Показать/скрыть</summary>
+
+Маршрутизация транзитных IP-пакетов
 
 Включить пересылку пакетов между интерфейсами на ISP, HQ-RTR, BR-RTR.
 *     nano /etc/sysctl.conf
 net.ipv4.ip_forward=1
 *     sysctl -p
-</details>
 
-
-# 2,8. Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
-<details>
-<summary>Показать/скрыть</summary>
+Включаем трансляцию адресов на внешнем интерфейсе для всех узлов локальной сети.
 
 *     iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
 
@@ -227,7 +230,7 @@ net.ipv4.ip_forward=1
 
 *     ip addr add 192.168.100.81/29 dev vlan999
 
-4.7. Автоматизация сохранения настроек Open vSwitch после перезагрузки
+4.7. (Опционально) Автоматизация сохранения настроек Open vSwitch после перезагрузки
    
 Скрипт восстановления конфигурации
 *     cd /usr/local/sbin
