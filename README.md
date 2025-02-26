@@ -320,7 +320,7 @@ Banner /etc/ssh-banner
 
 Создайте файл SSH-баннера:
 
-*     sudo nano /etc/ssh-banner
+*     nano /etc/ssh-banner
 
 Впишите строку:
   
