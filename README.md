@@ -38,7 +38,7 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 <summary>Показать/скрыть</summary>
  
   1.1. Изменение файла /etc/hostname
-*     sudo nano /etc/hostname
+*     nano /etc/hostname
 
 *     isp.au-team.irpo
       hq-rtr.au-team.irpo
@@ -49,7 +49,7 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 
   1.2. Изменение файла /etc/hosts
   
-*     sudo nano /etc/hosts
+*     nano /etc/hosts
 
 *     127.0.1.1       isp.au-team.irpo
       127.0.1.1       hq-rtr.au-team.irpo
@@ -143,15 +143,15 @@ net.ipv4.ip_forward=1
  
 Создание локальных учетных записей на серверах HQ-SRV и BR-SRV.
 
-*     sudo useradd -m -u 1010 -s /bin/bash sshuser
-*     sudo passwd sshuser
+*     useradd -m -u 1010 -s /bin/bash sshuser
+*     passwd sshuser
 *     P@ssw0rd
 
 Предоставление прав sudo без запроса пароля
 
-*     sudo usermod -aG sudo sshuser
+*     usermod -aG sudo sshuser
 
-*     sudo visudo
+*     visudo
 
 *     sshuser ALL=(ALL) NOPASSWD: ALL
 
@@ -159,17 +159,17 @@ net.ipv4.ip_forward=1
 
 Создание пользователя net_admin на маршрутизаторах HQ‑RTR и BR‑RTR
 
-*     sudo useradd -m -s /bin/bash net_admin
+*     useradd -m -s /bin/bash net_admin
 
-*     sudo passwd net_admin
+*     passwd net_admin
 
 *     P@$$word
 
 Предоставление привилегий sudo без запроса пароля
 
-*     sudo usermod -aG sudo net_admin
+*     usermod -aG sudo net_admin
 
-*     sudo visudo
+*     visudo
 
 *     net_admin ALL=(ALL) NOPASSWD: ALL
 </details>
@@ -180,51 +180,51 @@ net.ipv4.ip_forward=1
  
 4.1. Установка необходимых пакетов
 
-*     sudo apt update
+*     apt update
 
-*     sudo apt install -y openvswitch-switch isc-dhcp-server
+*     apt install -y openvswitch-switch isc-dhcp-server
 
 4.2. Запуск и автозапуск службы Open vSwitch
 
-*     sudo systemctl enable --now openvswitch-switch
+*     systemctl enable --now openvswitch-switch
 
 4.3. Создание виртуального коммутатора (моста) и настройка VLAN
 
-*     sudo ovs-vsctl add-br hq-sw
+*     ovs-vsctl add-br hq-sw
 
 Добавляем физические интерфейсы с VLAN-тегированием:
 
-*     sudo ovs-vsctl add-port hq-sw ens4 tag=100
+*     ovs-vsctl add-port hq-sw ens4 tag=100
 
-*     sudo ovs-vsctl add-port hq-sw ens5 tag=200
+*     ovs-vsctl add-port hq-sw ens5 tag=200
 
-*     sudo ovs-vsctl add-port hq-sw ens6 tag=999
+*     ovs-vsctl add-port hq-sw ens6 tag=999
 
 4.4. Добавление внутренних портов (internal) для управления VLAN
 
-*     sudo ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
+*     ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
 
-*     sudo ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
+*     ovs-vsctl add-port hq-sw vlan200 tag=200 -- set interface vlan200 type=internal
 
-*     sudo ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
+*     ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
 
 4.5. Включение моста и внутренних интерфейсов
 
-*     sudo ip link set hq-sw up
+*     ip link set hq-sw up
 
-*     sudo ip link set vlan100 up
+*     ip link set vlan100 up
 
-*     sudo ip link set vlan200 up
+*     ip link set vlan200 up
 
-*     sudo ip link set vlan999 up
+*     ip link set vlan999 up
 
 4.6. Назначение IP-адресов внутренним портам
 
-*     sudo ip addr add 192.168.100.1/26 dev vlan100
+*     ip addr add 192.168.100.1/26 dev vlan100
 
-*     sudo ip addr add 192.168.100.65/28 dev vlan200
+*     ip addr add 192.168.100.65/28 dev vlan200
 
-*     sudo ip addr add 192.168.100.81/29 dev vlan999
+*     ip addr add 192.168.100.81/29 dev vlan999
 
 4.7. Автоматизация сохранения настроек Open vSwitch после перезагрузки
    
@@ -234,7 +234,7 @@ net.ipv4.ip_forward=1
 
 Сохраните файл и сделайте его исполняемым:
 
-*     sudo chmod +x ovs-persistent.sh
+*     chmod +x ovs-persistent.sh
 
 Создание systemd‑сервиса
 
@@ -244,11 +244,11 @@ net.ipv4.ip_forward=1
 
 Сохраните файл, затем выполните:
 
-*     sudo systemctl daemon-reload
+*     systemctl daemon-reload
 
-*     sudo systemctl enable ovs-persistent.service
+*     systemctl enable ovs-persistent.service
 
-*     sudo systemctl start ovs-persistent.service
+*     systemctl start ovs-persistent.service
 
 Теперь при каждой загрузке системы скрипт автоматически восстановит нужную конфигурацию.
 </details>
@@ -259,7 +259,7 @@ net.ipv4.ip_forward=1
  
 Конфигурация файла dhcpd.conf
 
-*     sudo nano /etc/dhcp/dhcpd.conf
+*     nano /etc/dhcp/dhcpd.conf
 
 option domain-name-servers 77.88.8.8;
 
@@ -275,17 +275,17 @@ max-lease-time 7200;
 
 Указание интерфейса для DHCP
 
-*     sudo nano /etc/default/isc-dhcp-server
+*     nano /etc/default/isc-dhcp-server
 
 INTERFACES="vlan200"
 
 Перезапуск DHCP-сервера
 
-*     sudo systemctl restart isc-dhcp-server
+*     systemctl restart isc-dhcp-server
 
 Автозапуск сервиса isc-dhcp-server
 
-*     sudo systemctl enable isc-dhcp-server
+*     systemctl enable isc-dhcp-server
 </details>
 
 # 5. Настройка безопасного удаленного доступа по SSH на серверах HQ-SRV и BR-SRV
@@ -294,7 +294,7 @@ INTERFACES="vlan200"
  
 Редактирование файла конфигурации SSH
 
-*     sudo nano /etc/ssh/sshd_config
+*     nano /etc/ssh/sshd_config
 
 Заменить порт по умолчанию:
 
@@ -329,14 +329,15 @@ Banner /etc/ssh-banner
 
 Перезапуск SSH-сервера
 
-*     sudo systemctl restart sshd
+*     systemctl restart sshd
 
 
 Проверка настроек:
 
 С другого устройства (например, с HQ‑CLI) выполните подключение к серверу по порту 2024:
 
-ssh -p 2024 sshuser@192.168.100.2
+*     ssh -p 2024 sshuser@192.168.100.2
+
 </details>
 
 # 6. GRE-туннель между HQ-RTR и BR-RTR
@@ -429,14 +430,14 @@ ssh -p 2024 sshuser@192.168.100.2
    
 1.1. Обновите список пакетов и установите bind9, bind9utils, dnsutils:
 
-*     sudo apt update
-*     sudo apt install -y bind9 bind9utils dnsutils
+*     apt update
+*     apt install -y bind9 bind9utils dnsutils
 
 2. Настройка глобальных опций BIND
    
 2.1. Откройте и отредактируйте файл /etc/bind/named.conf.options:
 
-*     sudo nano /etc/bind/named.conf.options
+*     nano /etc/bind/named.conf.options
   
 2.2. Пример содержимого:
 
@@ -470,7 +471,7 @@ ssh -p 2024 sshuser@192.168.100.2
      
 3.1. Определение зон в named.conf.local
 
-*     sudo nano /etc/bind/named.conf.local
+*     nano /etc/bind/named.conf.local
   
 Добавьте определения для прямой зоны au-team.irpo и обратной зоны (192.168.100.x):
 
@@ -490,14 +491,14 @@ ssh -p 2024 sshuser@192.168.100.2
 
 3.2. Создание каталога для файлов зон
 
-*     sudo mkdir -p /etc/bind/master
+*     mkdir -p /etc/bind/master
 
 3.3. Прямая зона: au-team.db
 
 Создайте файл зоны, например, скопировав шаблон:
 
-*     sudo cp /etc/bind/db.local /etc/bind/master/au-team.db
-*     sudo nano /etc/bind/master/au-team.db
+*     cp /etc/bind/db.local /etc/bind/master/au-team.db
+*     nano /etc/bind/master/au-team.db
 
 Пример содержимого (au-team.db):
 
@@ -526,8 +527,8 @@ ssh -p 2024 sshuser@192.168.100.2
 
 Создайте (или скопируйте) файл:
 
-*     sudo cp /etc/bind/db.127 /etc/bind/master/au-team_rev.db
-*     sudo nano /etc/bind/master/au-team_rev.db
+*     cp /etc/bind/db.127 /etc/bind/master/au-team_rev.db
+*     nano /etc/bind/master/au-team_rev.db
 
 Пример содержимого (au-team_rev.db):
 
@@ -548,24 +549,24 @@ ssh -p 2024 sshuser@192.168.100.2
 
 3.5. Права и владельцы
 
-*     sudo chown -R bind:bind /etc/bind/master
-*     sudo chmod 0640 /etc/bind/master/*
+*     chown -R bind:bind /etc/bind/master
+*     chmod 0640 /etc/bind/master/*
 
 4.1. Проверка синтаксиса и перезапуск
 
-*     sudo named-checkconf
+*     named-checkconf
 
 Если нет ошибок, команда не выведет ничего.
 
 Проверка зон:
 
-*     sudo named-checkzone au-team.irpo /etc/bind/master/au-team.db
-*     sudo named-checkzone 100.168.192.in-addr.arpa /etc/bind/master/au-team_rev.db
+*     named-checkzone au-team.irpo /etc/bind/master/au-team.db
+*     named-checkzone 100.168.192.in-addr.arpa /etc/bind/master/au-team_rev.db
 
 Перезапуск BIND9:
 
-*     sudo systemctl restart bind9
-*     sudo systemctl enable bind9
+*     systemctl restart bind9
+*     systemctl enable bind9
 
 5. Настройка клиентов
 
