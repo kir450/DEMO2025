@@ -32,12 +32,13 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
 </details>
  
 # МОДУЛЬ 1. (Демо-2025 СиСА)
+
 # 1. Настройка имен устройств.</summary>
 
 <details>
 <summary>Показать/скрыть</summary>
  
-  1.1. Изменение файла /etc/hostname
+Изменение файла /etc/hostname
 *     nano /etc/hostname
 
 *     isp.au-team.irpo
@@ -47,7 +48,7 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
       br-rtr.au-team.irpo
       br-srv.au-team.irpo
 
-  1.2. Изменение файла /etc/hosts
+Изменение файла /etc/hosts
   
 *     nano /etc/hosts
 
@@ -57,8 +58,11 @@ HQ          | 32                 | 192.168.200.0     | 255.255.255.224    | /27 
       127.0.1.1       hq-cli.au-team.irpo
       127.0.1.1       br-rtr.au-team.irpo
       127.0.1.1       br-srv.au-team.irpo
+</details>
 
- 1.3. Задаем IP адреса сетевым интерфейсам согласно таблицы адресации, nmtui.
+# 2 Задаем IP адреса сетевым интерфейсам согласно таблицы адресации, nmtui.
+<details>
+<summary>Показать/скрыть</summary>
 
 Настройка ISP
 
@@ -108,10 +112,9 @@ BR-RTR_BR-SRV ens3 192.168.200.2/27 Шлюз 192.168.200.1
 *     ip –c a
 *     ip –c –br a
 
-
 </details>
 
-# 2,8. Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
+# 3. Настройка доступа в интернет с помощью iptables на ISP, HQ-RTR, BR-RTR.
 <details>
 <summary>Показать/скрыть</summary>
 
@@ -141,7 +144,7 @@ net.ipv4.ip_forward=1
 *     sudo iptables -t nat -L -n -v
 </details>
 
-# 3. Создание локальных учетных записей на HQ-SRV и BR-SRV, HQ‑RTR и BR‑RTR
+# 4. Создание локальных учетных записей на HQ-SRV и BR-SRV, HQ‑RTR и BR‑RTR
 <details>
 <summary>Показать/скрыть</summary>
  
@@ -178,21 +181,21 @@ net.ipv4.ip_forward=1
 *     net_admin ALL=(ALL) NOPASSWD: ALL
 </details>
 
-# 4. Настройка на интерфейсе HQ-RTR в сторону офиса HQ виртуального коммутатора:
+# 5. Настройка на интерфейсе HQ-RTR в сторону офиса HQ виртуального коммутатора и DHCP-сервера:
 <details>
 <summary>Показать/скрыть</summary>
  
-4.1. Установка необходимых пакетов
+Установка необходимых пакетов
 
 *     apt update
 
 *     apt install -y openvswitch-switch isc-dhcp-server
 
-4.2. Запуск и автозапуск службы Open vSwitch
+Запуск и автозапуск службы Open vSwitch
 
 *     systemctl enable --now openvswitch-switch
 
-4.3. Создание виртуального коммутатора (моста) и настройка VLAN
+Создание виртуального коммутатора (моста) и настройка VLAN
 
 *     ovs-vsctl add-br hq-sw
 
@@ -204,7 +207,7 @@ net.ipv4.ip_forward=1
 
 *     ovs-vsctl add-port hq-sw ens6 tag=999
 
-4.4. Добавление внутренних портов (internal) для управления VLAN
+Добавление внутренних портов (internal) для управления VLAN
 
 *     ovs-vsctl add-port hq-sw vlan100 tag=100 -- set interface vlan100 type=internal
 
@@ -212,7 +215,7 @@ net.ipv4.ip_forward=1
 
 *     ovs-vsctl add-port hq-sw vlan999 tag=999 -- set interface vlan999 type=internal
 
-4.5. Включение моста и внутренних интерфейсов
+Включение моста и внутренних интерфейсов
 
 *     ip link set hq-sw up
 
@@ -222,7 +225,7 @@ net.ipv4.ip_forward=1
 
 *     ip link set vlan999 up
 
-4.6. Назначение IP-адресов внутренним портам
+Назначение IP-адресов внутренним портам
 
 *     ip addr add 192.168.100.1/26 dev vlan100
 
@@ -230,7 +233,7 @@ net.ipv4.ip_forward=1
 
 *     ip addr add 192.168.100.81/29 dev vlan999
 
-4.7. (Опционально) Автоматизация сохранения настроек Open vSwitch после перезагрузки
+(Опционально) Автоматизация сохранения настроек Open vSwitch после перезагрузки
    
 Скрипт восстановления конфигурации
 *     cd /usr/local/sbin
@@ -255,12 +258,10 @@ net.ipv4.ip_forward=1
 *     systemctl start ovs-persistent.service
 
 Теперь при каждой загрузке системы скрипт автоматически восстановит нужную конфигурацию.
-</details>
 
-# 9. Настройка DHCP-сервера на HQ-RTR для VLAN 200
-<details>
-<summary>Показать/скрыть</summary>
- 
+
+# Настройка DHCP-сервера на HQ-RTR для VLAN 200
+
 Конфигурация файла dhcpd.conf
 
 *     nano /etc/dhcp/dhcpd.conf
@@ -290,9 +291,9 @@ INTERFACES="vlan200"
 Автозапуск сервиса isc-dhcp-server
 
 *     systemctl enable isc-dhcp-server
-</details>
 
-# 5. Настройка безопасного удаленного доступа по SSH на серверах HQ-SRV и BR-SRV
+
+# 6. Настройка безопасного удаленного доступа по SSH на серверах HQ-SRV и BR-SRV
 <details>
 <summary>Показать/скрыть</summary>
  
@@ -344,7 +345,7 @@ Banner /etc/ssh-banner
 
 </details>
 
-# 6. GRE-туннель между HQ-RTR и BR-RTR
+# 7. GRE-туннель между HQ-RTR и BR-RTR
 <details>
 <summary>Показать/скрыть</summary>
  
@@ -362,7 +363,7 @@ Banner /etc/ssh-banner
 ![image](https://github.com/user-attachments/assets/bf1c59f4-6f7d-4082-976e-6d4f4c0401b4)
 </details>
 
-# 7. Настройка динамической (внутренней) маршрутизации средствами FRR на HQ-RTR и BR-RTR.
+# 8. Настройка динамической (внутренней) маршрутизации средствами FRR на HQ-RTR и BR-RTR.
 <details>
 <summary>Показать/скрыть</summary>
  
@@ -426,24 +427,22 @@ Banner /etc/ssh-banner
 *     vtysh -c "show running-config"
 </details>
 
-# 10. Настройка DNS для офисов HQ и BR на HQ-SRV.
+# 9. Настройка DNS для офисов HQ и BR на HQ-SRV.
 <details>
 <summary>Показать/скрыть</summary>
 
-1. Установка необходимых пакетов
-   
-1.1. Обновите список пакетов и установите bind9, bind9utils, dnsutils:
+Обновите список пакетов и установите bind9, bind9utils, dnsutils:
 
 *     apt update
 *     apt install -y bind9 bind9utils dnsutils
 
-2. Настройка глобальных опций BIND
+Настройка глобальных опций BIND
    
-2.1. Откройте и отредактируйте файл /etc/bind/named.conf.options:
+Откройте и отредактируйте файл /etc/bind/named.conf.options:
 
 *     nano /etc/bind/named.conf.options
   
-2.2. Пример содержимого:
+Пример содержимого:
 
     options {
         directory "/var/cache/bind";
@@ -471,12 +470,12 @@ Banner /etc/ssh-banner
     };
 
 
-  3. Настройка зон (прямая и обратная)
+Настройка зон (прямая и обратная)
      
-3.1. Определение зон в named.conf.local
+Определение зон в named.conf.local
 
 *     nano /etc/bind/named.conf.local
-  
+
 Добавьте определения для прямой зоны au-team.irpo и обратной зоны (192.168.100.x):
 
     // Прямая зона для домена au-team.irpo
@@ -493,11 +492,11 @@ Banner /etc/ssh-banner
 
 Сохраните изменения.
 
-3.2. Создание каталога для файлов зон
+Создание каталога для файлов зон
 
 *     mkdir -p /etc/bind/master
 
-3.3. Прямая зона: au-team.db
+Прямая зона: au-team.db
 
 Создайте файл зоны, например, скопировав шаблон:
 
@@ -527,7 +526,7 @@ Banner /etc/ssh-banner
 
 Сохраните файл.
 
-3.4. Обратная зона: au-team_rev.db
+Обратная зона: au-team_rev.db
 
 Создайте (или скопируйте) файл:
 
@@ -551,12 +550,12 @@ Banner /etc/ssh-banner
 
 
 
-3.5. Права и владельцы
+Права и владельцы
 
 *     chown -R bind:bind /etc/bind/master
 *     chmod 0640 /etc/bind/master/*
 
-4.1. Проверка синтаксиса и перезапуск
+Проверка синтаксиса и перезапуск
 
 *     named-checkconf
 
@@ -572,25 +571,25 @@ Banner /etc/ssh-banner
 *     systemctl restart bind9
 *     systemctl enable bind9
 
-5. Настройка клиентов
+Настройка клиентов
 
-5.1. HQ‑SRV (DNS-сервер)
+HQ‑SRV (DNS-сервер)
 
 Убедитесь, что сам HQ‑SRV использует свой IP как DNS-сервер (192.168.100.2).
 ![image](https://github.com/user-attachments/assets/1a65eafc-0233-4a9c-bca2-349770dd8074)
 
-5.2. BR‑SRV
+BR‑SRV
 
 Укажите в настройках сетевого интерфейса (через nmtui), что DNS-сервер – 192.168.100.2.
 ![image](https://github.com/user-attachments/assets/84a4ef15-5927-44ed-9b55-a98fcca0ff50)
 
-5.3. HQ‑CLI
+HQ‑CLI
 
 Если HQ‑CLI получает адреса по DHCP, настройте DHCP-сервер так, чтобы он выдавал 192.168.100.2 в качестве DNS.
 ![image](https://github.com/user-attachments/assets/ff16bef4-8d39-42c5-8732-dc7f0e00df4c)
 
 
-6. Тестирование
+Тестирование
    
 Проверяем работу DNS на HQ-SRV с BR-SRV с помощью команды host
 
@@ -627,7 +626,7 @@ Banner /etc/ssh-banner
       ping wiki.au-team.irpo
 </details>
 
-# 11. Настройте часовой пояс
+# 10. Настройте часовой пояс
 <details>
 <summary>Показать/скрыть</summary>
  
