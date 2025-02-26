@@ -257,25 +257,27 @@ net.ipv4.ip_forward=1
 <details>
 <summary>Показать/скрыть</summary>
  
-Указание интерфейса для DHCP
-
-*     sudo nano /etc/default/isc-dhcp-server
-
-INTERFACES="vlan200"
-
 Конфигурация файла dhcpd.conf
 
 *     sudo nano /etc/dhcp/dhcpd.conf
+
+option domain-name-servers 77.88.8.8;
+
+default-lease-time 600;
+
+max-lease-time 7200;
 
 *     subnet 192.168.100.64 netmask 255.255.255.240 {
           range 192.168.100.66 192.168.100.78;
           option routers 192.168.100.65; 
           option subnet-mask 255.255.255.240;
-          option domain-name-servers 77.88.8.8 ;
-          option broadcast-address 192.168.100.79;
-          default-lease-time 600;
-          max-lease-time 7200;
       }
+
+Указание интерфейса для DHCP
+
+*     sudo nano /etc/default/isc-dhcp-server
+
+INTERFACES="vlan200"
 
 Перезапуск DHCP-сервера
 
