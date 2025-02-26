@@ -259,7 +259,6 @@ net.ipv4.ip_forward=1
 
 Теперь при каждой загрузке системы скрипт автоматически восстановит нужную конфигурацию.
 
-
 # Настройка DHCP-сервера на HQ-RTR для VLAN 200
 
 Конфигурация файла dhcpd.conf
@@ -291,7 +290,7 @@ INTERFACES="vlan200"
 Автозапуск сервиса isc-dhcp-server
 
 *     systemctl enable isc-dhcp-server
-
+</details>
 
 # 6. Настройка безопасного удаленного доступа по SSH на серверах HQ-SRV и BR-SRV
 <details>
