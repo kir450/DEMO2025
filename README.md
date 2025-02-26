@@ -348,7 +348,7 @@ Banner /etc/ssh-banner
 <details>
 <summary>Показать/скрыть</summary>
  
-Настройка HQ-RT, nmtui
+Настройка HQ-RTR, nmtui
 ![image](https://github.com/user-attachments/assets/91dae2e8-518d-46cd-ba7d-78894d895776)
 
 
