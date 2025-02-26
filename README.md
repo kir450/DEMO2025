@@ -371,28 +371,7 @@ Banner /etc/ssh-banner
 *     sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
 
 Заменить содержимое /etc/frr/frr.conf на HQ-RTR:
-
-    frr version 7.5.1
-    frr defaults traditional
-    hostname br-rtr.au-team.irpo
-    log syslog informational
-    no ipv6 forwarding
-    service integrated-vtysh-config
-    !
-    interface tun1
-    ip ospf authentication message-digest
-    ip ospf message-digest-key 1 md5 Test123
-    !
-    router ospf
-    network 10.10.0.0/30 area 0
-    network 192.168.200.0/27 area 0
-    area 0 authentication message-digest
-    !
-    line vty
-    !
-
-Заменить содержимое /etc/frr/frr.conf на BR-RTR:
-
+   
     frr version 7.5.1
     frr defaults traditional
     hostname hq-rtr.au-team.irpo
@@ -413,6 +392,26 @@ Banner /etc/ssh-banner
     line vty
     !
 
+Заменить содержимое /etc/frr/frr.conf на BR-RTR:
+  
+    frr version 7.5.1
+    frr defaults traditional
+    hostname br-rtr.au-team.irpo
+    log syslog informational
+    no ipv6 forwarding
+    service integrated-vtysh-config
+    !
+    interface tun1
+    ip ospf authentication message-digest
+    ip ospf message-digest-key 1 md5 Test123
+    !
+    router ospf
+    network 10.10.0.0/30 area 0
+    network 192.168.200.0/27 area 0
+    area 0 authentication message-digest
+    !
+    line vty
+    !
 
 Перезагрузка:
 *     systemctl restart frr
