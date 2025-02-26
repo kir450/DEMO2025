@@ -1,3 +1,171 @@
+
+Настройка через vtysh на HQ‑RTR
+Запустите vtysh с правами суперпользователя:
+
+bash
+Копировать
+Редактировать
+sudo vtysh
+Перейдите в режим конфигурации:
+
+plaintext
+Копировать
+Редактировать
+hq-rtr.au-team.irpo# configure terminal
+Задайте нужный hostname (в данном случае, согласно вашему примеру, для HQ‑RTR hostname задаётся как br-rtr.au-team.irpo):
+
+plaintext
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# hostname br-rtr.au-team.irpo
+Настройте интерфейс туннеля (tun1) для OSPF с MD5-аутентификацией:
+
+plaintext
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# interface tun1
+br-rtr.au-team.irpo(config-if)# ip ospf authentication message-digest
+br-rtr.au-team.irpo(config-if)# ip ospf message-digest-key 1 md5 Test123
+br-rtr.au-team.irpo(config-if)# exit
+Настройте процесс OSPF:
+
+plaintext
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# router ospf 1
+br-rtr.au-team.irpo(config-router)# network 10.10.0.0/30 area 0
+br-rtr.au-team.irpo(config-router)# network 192.168.200.0/27 area 0
+br-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
+br-rtr.au-team.irpo(config-router)# exit
+Завершите конфигурацию и сохраните изменения:
+
+plaintext
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# exit
+br-rtr.au-team.irpo# write
+br-rtr.au-team.irpo# exit
+Перезапустите FRR, чтобы убедиться, что новые настройки вступили в силу:
+
+bash
+Копировать
+Редактировать
+sudo systemctl restart frr
+Проверьте конфигурацию:
+
+bash
+Копировать
+Редактировать
+sudo vtysh -c "show ip ospf neighbor"
+sudo vtysh -c "show ip route ospf"
+sudo vtysh -c "show running-config"
+Настройка через vtysh на BR‑RTR
+Запустите vtysh:
+
+bash
+Копировать
+Редактировать
+sudo vtysh
+Перейдите в режим глобальной конфигурации:
+
+plaintext
+Копировать
+Редактировать
+br-rtr.au-team.irpo# configure terminal
+Задайте нужный hostname (согласно вашему примеру для BR‑RTR – hq-rtr.au-team.irpo):
+
+plaintext
+Копировать
+Редактировать
+br-rtr.au-team.irpo(config)# hostname hq-rtr.au-team.irpo
+Настройте интерфейс туннеля (tun1) для OSPF:
+
+plaintext
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# interface tun1
+hq-rtr.au-team.irpo(config-if)# ip ospf authentication message-digest
+hq-rtr.au-team.irpo(config-if)# ip ospf message-digest-key 1 md5 Test123
+hq-rtr.au-team.irpo(config-if)# exit
+Настройте процесс OSPF для сетей офиса HQ:
+
+plaintext
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# router ospf 1
+hq-rtr.au-team.irpo(config-router)# network 10.10.0.0/30 area 0
+hq-rtr.au-team.irpo(config-router)# network 192.168.100.0/26 area 0
+hq-rtr.au-team.irpo(config-router)# network 192.168.100.64/28 area 0
+hq-rtr.au-team.irpo(config-router)# area 0 authentication message-digest
+hq-rtr.au-team.irpo(config-router)# exit
+Завершите конфигурацию и сохраните:
+
+plaintext
+Копировать
+Редактировать
+hq-rtr.au-team.irpo(config)# exit
+hq-rtr.au-team.irpo# write
+hq-rtr.au-team.irpo# exit
+Перезапустите FRR:
+
+bash
+Копировать
+Редактировать
+sudo systemctl restart frr
+Проверьте конфигурацию:
+
+bash
+Копировать
+Редактировать
+sudo vtysh -c "show ip ospf neighbor"
+sudo vtysh -c "show ip route ospf"
+sudo vtysh -c "show running-config"
+Итоговая проверка
+На обоих маршрутизаторах проверьте:
+
+Соседство OSPF:
+bash
+Копировать
+Редактировать
+sudo vtysh -c "show ip ospf neighbor"
+Таблицу маршрутов, полученных через OSPF:
+bash
+Копировать
+Редактировать
+sudo vtysh -c "show ip route ospf"
+Текущую конфигурацию FRR:
+bash
+Копировать
+Редактировать
+sudo vtysh -c "show running-config"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 1. Удаление пакетов с конфигурационными файлами
 Выполните следующую команду (под root или с sudo), чтобы удалить указанные пакеты:
 
