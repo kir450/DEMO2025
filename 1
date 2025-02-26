@@ -1,3 +1,64 @@
+Итоговые инструкции
+Для BR-RTR:
+bash
+apt update && apt install -y frr
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+vtysh -c "configure terminal" \
+      -c "interface tun1" \
+      -c "ip ospf authentication message-digest" \
+      -c "ip ospf message-digest-key 1 md5 Test123" \
+      -c "exit" \
+      -c "router ospf" \
+      -c "network 10.10.0.0/30 area 0" \
+      -c "network 192.168.200.0/27 area 0" \
+      -c "area 0 authentication message-digest" \
+      -c "exit" \
+      -c "exit" \
+      -c "end" \
+      -c "write"
+systemctl restart frr
+vtysh -c "show ip ospf neighbor"
+vtysh -c "show ip route"
+vtysh -c "show running-config"
+Для BR-RTR:
+bash
+apt update && apt install -y frr
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+vtysh -c "configure terminal" \
+      -c "interface tun1" \
+      -c "ip ospf authentication message-digest" \
+      -c "ip ospf message-digest-key 1 md5 Test123" \
+      -c "exit" \
+      -c "router ospf" \
+      -c "network 10.10.0.0/30 area 0" \
+      -c "network 192.168.100.0/26 area 0" \
+      -c "network 192.168.100.64/28 area 0" \
+      -c "area 0 authentication message-digest" \
+      -c "exit" \
+      -c "exit" \
+      -c "end" \
+      -c "write"
+systemctl restart frr
+vtysh -c "show ip ospf neighbor"
+vtysh -c "show ip route"
+vtysh -c "show running-config"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Настройка через vtysh на HQ‑RTR
 Запустите vtysh с правами суперпользователя:
