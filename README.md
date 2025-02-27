@@ -584,8 +584,9 @@ BR‑SRV
 HQ‑CLI
 
 Если HQ‑CLI получает адреса по DHCP, настройте DHCP-сервер так, чтобы он выдавал 192.168.100.2 в качестве DNS.
-![image](https://github.com/user-attachments/assets/ff16bef4-8d39-42c5-8732-dc7f0e00df4c)
+![image](https://github.com/user-attachments/assets/9c5a10aa-bbc2-4c78-b360-a7b5e8269494)
 
+*     systemctl restart isc-dhcp-server
 
 Тестирование
    
