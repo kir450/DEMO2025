@@ -368,7 +368,42 @@ Banner /etc/ssh-banner
  
 *     apt update && apt install -y frr
 
-*     sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+*     nano /etc/frr/daemons
+
+ospfd=yes
+ospf6d=yes
+
+*     systemctl enable –-now frr
+
+Переходим в интерфейс управления симуляцией FRR с помощью vtysh 
+
+Сначала сделаем для HQ-R: 
+
+    configure terminal - вход в режим глобальной конфигурации 
+    router-id 1.1.1.1 – укажем id маршрутизатора  
+    router ospf - переход в режим конфигурации OSPFv2 
+    passive-interface default 
+    network 172.16.100.0/26 area 0 – объявляем локальную сеть офиса HQ 
+    network 10.10.10.0/24 area 0 - объявляем сеть GRE-туннеля 
+    interface tun1 
+    ip ospf network point-to-point 
+    no ip ospf passive 
+    do wr - сохраняем текущую конфигурацию 
+
+И запоминаем последовательность команд для BR-R: 
+ 
+    configure terminal - вход в режим глобальной конфигурации 
+    router-id 2.2.2.2 – укажем id маршрутизатора  
+    router ospf - переход в режим конфигурации OSPFv2 
+    passive-interface default 
+    network 192.168.100.0/28 area 0 - объявляем локальную сеть офиса BRANCH 
+    network 10.10.10.0/24 area 0 - объявляем сеть GRE-туннеля 
+    interface tun1 
+    ip ospf network point-to-point 
+    no ip ospf passive 
+    do wr - сохраняем текущую конфигурацию 
+ 
+    exit - выходим
 
 Заменить содержимое /etc/frr/frr.conf на HQ-RTR:
    
