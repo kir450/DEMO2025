@@ -151,6 +151,8 @@ net.ipv4.ip_forward=1
 Создание локальных учетных записей на серверах HQ-SRV и BR-SRV.
 
 *     useradd -m -u 1010 -s /bin/bash sshuser
+      useradd sshuser -u 1010
+      
 *     passwd sshuser
 *     P@ssw0rd
 
