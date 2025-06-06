@@ -142,6 +142,242 @@ ping 192.168.100.66
 
 
 
+Подготовка и установка Moodle на Debian 10 (сервер HQ-SRV)
+Ниже приведена подробная инструкция по ручной установке Moodle на Debian 10 с веб-сервером Apache и СУБД MariaDB. Альтернативно даётся пример установки с помощью Docker.
+1. Системные требования и обновление
+Обновите систему и установите утилиты:
+bash
+Copy
+Edit
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y wget curl unzip
+Убедитесь, что Debian 10 поставляется с MariaDB (вместо MySQL) версии 10.3 по умолчанию. Debian 10 заточен под MariaDB, она полностью совместима с Moodle.
+2. Установка Apache, PHP и модулей
+Установите Apache и PHP 7.3 (версия PHP 7.3 является последней из коробки для Debian 10 и подходит для Moodle 4.0 и ниже
+docs.moodle.org
+). Установите также модули PHP для работы с Moodle:
+bash
+Copy
+Edit
+sudo apt install -y apache2 libapache2-mod-php7.3 php7.3 php7.3-cli php7.3-common php7.3-mysql \
+  php7.3-gd php7.3-intl php7.3-curl php7.3-xml php7.3-mbstring php7.3-zip php7.3-soap php7.3-ldap php7.3-xmlrpc
+В установку можно добавить и другие пакеты (например php7.3-json, php7.3-sodium), но перечисленные включают все обязательные расширения: ctype, curl, gd, intl, json, mbstring, xml, zip и драйвер для MariaDB (php7.3-mysql)
+docs.moodle.org
+.
+Настройте PHP (при необходимости в /etc/php/7.3/apache2/php.ini):
+Установите memory_limit = 128M или выше (Moodle откажется устанавливаться при меньшем лимите)
+docs.moodle.org
+.
+Убедитесь, что file_uploads = On, session.auto_start = Off (обычно по умолчанию).
+Включите важные модули Apache:
+bash
+Copy
+Edit
+sudo a2enmod rewrite
+sudo systemctl restart apache2
+Важно: в конфигурации Apache для каталога Moodle нужно включить поддержку AcceptPathInfo (для корректной работы пути с /r.php) и разрешить директивы AllowOverride All, чтобы Moodle мог использовать .htaccess
+docs.moodle.org
+. Например, в файле /etc/apache2/sites-available/000-default.conf:
+apache
+Copy
+Edit
+<VirtualHost *:80>
+  DocumentRoot /var/www/html/moodle
+  <Directory /var/www/html/moodle>
+    Options +Indexes +FollowSymLinks
+    AllowOverride All
+    Require all granted
+    # Включаем слэш-аргументы для Moodle
+    AcceptPathInfo On
+  </Directory>
+</VirtualHost>
+После этого перезапустите Apache:
+bash
+Copy
+Edit
+sudo systemctl restart apache2
+3. Установка и настройка MariaDB
+Установите MariaDB и запустите скрипт безопасной настройки:
+bash
+Copy
+Edit
+sudo apt install -y mariadb-server
+sudo mysql_secure_installation
+Процесс mysql_secure_installation позволит задать пароль root, удалить анонимных пользователей, запретить удалённый доступ для root и удалить тестовую БД
+digitalocean.com
+.
+Создайте базу данных и пользователя для Moodle:
+Войдите в консоль MariaDB:
+bash
+Copy
+Edit
+sudo mysql -u root -p
+Выполните SQL-команды (замените moodledb, moodle и P@ssw0rd на нужные, в нашем случае используются именно эти значения):
+sql
+Copy
+Edit
+CREATE DATABASE moodledb DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'moodle'@'localhost' IDENTIFIED BY 'P@ssw0rd';
+GRANT ALL PRIVILEGES ON moodledb.* TO 'moodle'@'localhost';
+FLUSH PRIVILEGES;
+Здесь мы создаём базу moodledb с кодировкой utf8mb4 и даём пользователю moodle с паролем P@ssw0rd все привилегии на эту базу
+docs.moodle.org
+docs.moodle.org
+. Закрываем доступ к привилегиям командой FLUSH PRIVILEGES;.
+4. Загрузка и развёртывание Moodle
+Перейдите в веб-каталог Apache и загрузите архив Moodle:
+bash
+Copy
+Edit
+cd /var/www/html
+sudo wget https://download.moodle.org/stable400/moodle-latest-400.tgz
+sudo tar -zxvf moodle-latest-400.tgz
+sudo mv moodle /var/www/html/moodle
+sudo rm moodle-latest-400.tgz
+Здесь мы скачиваем стабильную версию Moodle 4.0 (для PHP 7.3) и распаковываем её в /var/www/html/moodle
+docs.moodle.org
+.
+Установите права доступа:
+Каталог с кодом Moodle должен быть доступен для чтения веб-сервером, но НЕ должен быть доступен для записи (чтобы предотвратить изменение файлов злоумышленниками)
+docs.moodle.org
+. Обычно выполняют:
+bash
+Copy
+Edit
+sudo chown -R root:root /var/www/html/moodle
+sudo chmod -R 755 /var/www/html/moodle
+Создайте отдельный каталог для данных Moodle вне веб-корня (например, /var/moodledata)
+docs.moodle.org
+. Например:
+bash
+Copy
+Edit
+sudo mkdir /var/moodledata
+sudo chmod 0777 /var/moodledata
+Или, чтобы ограничить доступ, можно выполнить chown www-data:www-data /var/moodledata && chmod 770, сделав владельцем веб-сервер. Главное — директория не должна находиться под /var/www/html
+docs.moodle.org
+docs.moodle.org
+. Это необходимо ради безопасности — в ней будут храниться загруженные файлы и кэш Moodle, и они не должны быть напрямую доступны из браузера.
+5. Настройка сайта Moodle через веб-интерфейс
+Откройте браузер и перейдите на адрес http://HQ-SRV/ (или IP-адрес вашего сервера). Должно запуститься веб-установщик Moodle.
+Выберите язык установки, примите лицензию и укажите параметры сайта:
+Каталог Moodle: /var/www/html/moodle (он уже установлен).
+Каталог данных Moodle: /var/moodledata.
+Движок базы данных: MariaDB.
+Данные для подключения к БД: имя БД moodledb, имя пользователя moodle, пароль P@ssw0rd, хост localhost.
+Следуйте мастеру установки: на этапе “Очистка окружения” убедитесь, что все расширения PHP установлены и параметры (например php.ini) удовлетворяют требованиям Moodle.
+При завершении установки введите данные администратора:
+Логин: admin
+Пароль: P@ssw0rd
+Укажите дополнительную информацию (имя сайта, полное и короткое имя, адрес, отчество и т. д.). После этого установка будет завершена автоматически
+docs.moodle.org
+.
+После успешной установки проверьте, что файлы config.php (создался в /var/www/html/moodle/config.php) и права доступа к папкам в порядке: код Moodle не доступен на запись, а каталог данных доступен на запись web-сервером.
+6. Настройка главной страницы Moodle
+Как только вы войдёте в систему под администратором, перейдите в «Администрирование сайта» → «Главная страница» (Front page) и отключите отображение стандартных элементов (курсов, категорий, новостей) там, где нужно. Можно оставить только блоки или контент по желанию.
+Измените заголовок сайта: перейдите в «Администрирование сайта» → «Общие настройки» (General → Site settings) и установите Полное название сайта и Краткое название на «4». Это изменит отображаемое имя сайта
+docs.moodle.org
+.
+Добавьте содержимое в центральную область: включите режим редактирования и нажмите шестерёнку (Настройки секции). Убедитесь, что включено «Включить раздел» (Include a topic section), затем введите в поле «Краткое описание страницы» (Summary) цифру 4
+docs.moodle.org
+. Либо добавьте HTML-блок с содержимым «4» и оставьте его заголовок пустым
+docs.moodle.org
+. Таким образом главная страница будет отображать только цифру 4 без других подписей.
+При необходимости отключите отображение других блоков: в режиме редактирования нажмите на значок настроек каждого блока (например «Администрирование») и выберите «Скрыть» (и т. д.), чтобы на главной странице остался лишь блок (или область) с цифрой 4.
+После этих настроек на главной странице Moodle будет показана только цифра «4», соответствующая номеру рабочего места, без лишних надписей.
+7. Важные параметры и рекомендации
+Версии ПО: Apache 2.4, MariaDB 10.3, PHP 7.3 (Debian 10) и Moodle 4.0 (stable) (PHP 7.3 поддерживает Moodle 4.0
+docs.moodle.org
+).
+PHP-параметры: memory_limit ≥ 128M и post_max_size, upload_max_filesize (для загрузки курсовых материалов) стоит увеличить по потребности
+docs.moodle.org
+. Также убедитесь, что file_uploads=On и session.auto_start=Off.
+Каталоги: код Moodle в /var/www/html/moodle (чтение веб-сервера, не запись), а данные Moodle в /var/moodledata (запись веб-сервера)
+docs.moodle.org
+.
+Пользователь и БД: БД moodledb (кодировка utf8mb4) и пользователь moodle с паролем P@ssw0rd с полными правами на moodledb
+docs.moodle.org
+docs.moodle.org
+. Эти реквизиты должны совпадать с теми, что вы ввели в веб-инсталляторе.
+Cron: рекомендуется настроить системный cron для запуска admin/cli/cron.php каждую минуту (например, через crontab -e добавить * * * * * /usr/bin/php /var/www/html/moodle/admin/cli/cron.php), чтобы правильно работали фоновые задачи (удаление активностей, переписки, напоминания и пр.).
+Безопасность: проверьте, чтобы доступ к /var/moodledata был ограничен (лишь для www-data или rwx для всех, как пример
+docs.moodle.org
+). Код Moodle не должен быть изменяем через браузер.
+8. Альтернативный вариант: установка через Docker
+Вместо ручной установки можно использовать готовые Docker-контейнеры для Moodle. Например, компания Bitnami предоставляет образ bitnami/moodle, в котором уже упакованы Apache, PHP и MariaDB. Порядок действий может быть таким:
+Установите Docker и Docker Compose на сервере.
+Создайте docker-compose.yml вроде этого (пример с отдельными сервисами):
+yaml
+Copy
+Edit
+version: '3'
+services:
+  db:
+    image: bitnami/mariadb:10.3
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_DATABASE=moodledb
+      - MARIADB_USER=moodle
+      - MARIADB_PASSWORD=P@ssw0rd
+    volumes:
+      - db_data:/bitnami/mariadb
+  moodle:
+    image: bitnami/moodle:latest
+    ports:
+      - "80:80"
+    environment:
+      - MOODLE_DATABASE_TYPE=oci_mssql
+      - MOODLE_DATABASE_HOST=db
+      - MOODLE_DATABASE_PORT_NUMBER=3306
+      - MOODLE_DATABASE_NAME=moodledb
+      - MOODLE_DATABASE_USER=moodle
+      - MOODLE_DATABASE_PASSWORD=P@ssw0rd
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - moodle_data:/bitnami/moodle
+  # (можно добавить сервис phpMyAdmin, cron и т.д.)
+volumes:
+  db_data:
+  moodle_data:
+После этого запустите: docker-compose up -d. Контейнеры создадут БД и Moodle автоматически. В веб-браузере зайдите на http://HQ-SRV/ и завершите установку через веб-интерфейс (логин/пароль администратора можно задать через переменные среды или при первом запуске контейнера).
+Либо использовать один контейнер Moodlе (включающий всё) командой:
+bash
+Copy
+Edit
+docker run -d --name moodle -p 80:80 bitnami/moodle:latest
+(он спросит данные БД при первом запуске). Есть и другие готовые проекты (например Docker Compose-файл с отдельными контейнерами для DB, Moodle, phpMyAdmin и cron
+github.com
+). Использование Docker упрощает развёртывание и управление зависимостями, особенно если вы знакомы с контейнерами. Однако в задачах, где нужно строгое соблюдение конфигурации (как для тестового места HQ-SRV), может потребоваться ручная настройка параметров среды. Источники: официальная документация Moodle по установке на Debian
+docs.moodle.org
+docs.moodle.org
+, руководство DigitalOcean по MariaDB на Debian 10
+digitalocean.com
+, а также руководства по PHP/Moodle
+docs.moodle.org
+docs.moodle.org
+docs.moodle.org
+ и примеры Docker-настроек
+github.com
+github.com
+.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 root@br-rtr:/etc/frr# cat daemons
