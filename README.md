@@ -349,7 +349,14 @@ Banner /etc/ssh-banner
 # 7. GRE-туннель между HQ-RTR и BR-RTR
 <details>
 <summary>Показать/скрыть</summary>
- 
+
+Profile name tun1
+Device tunl
+Mode <GRE>
+Parent ens3
+Local IP 172.16.4.2
+Remote IP 172.16.5.2
+Addresses 10.10.0.1/30
 Настройка HQ-RTR, nmtui
 ![image](https://github.com/user-attachments/assets/91dae2e8-518d-46cd-ba7d-78894d895776)
 
@@ -361,6 +368,9 @@ Banner /etc/ssh-banner
 Активируем (перезагружаем) интерфейс tun1
 
 Настройка BR-RTR
+Local IP 172.16.5.2
+Remote IP 172.16.4.2
+Addresses 10.10.0.2/30
 ![image](https://github.com/user-attachments/assets/bf1c59f4-6f7d-4082-976e-6d4f4c0401b4)
 </details>
 
