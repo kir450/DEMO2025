@@ -1245,4 +1245,73 @@ id_rsa.pub – открытый ключ
 
 *     ssh sshuser@172.16.5.2 -p 2024
 
+
+
+
+
+
+Файл docker-compose.yml нужно разместить в отдельной директории на сервере, например:
+
+
+mkdir ~/moodle-docker && cd ~/moodle-docker
+Затем внутри этой директории:
+
+Создайте файл docker-compose.yml:
+
+
+nano docker-compose.yml
+Вставьте туда содержимое (как в инструкции), сохраните и выйдите.
+
+Запустите контейнеры:
+
+
+docker-compose up -d
+
+
+version: '3'
+services:
+  db:
+    image: bitnami/mariadb:10.3
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_DATABASE=moodledb
+      - MARIADB_USER=moodle
+      - MARIADB_PASSWORD=P@ssw0rd
+    volumes:
+      - db_data:/bitnami/mariadb
+  moodle:
+    image: bitnami/moodle:latest
+    ports:
+      - "80:80"
+    environment:
+      - MOODLE_DATABASE_TYPE=oci_mssql
+      - MOODLE_DATABASE_HOST=db
+      - MOODLE_DATABASE_PORT_NUMBER=3306
+      - MOODLE_DATABASE_NAME=moodledb
+      - MOODLE_DATABASE_USER=moodle
+      - MOODLE_DATABASE_PASSWORD=P@ssw0rd
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - moodle_data:/bitnami/moodle
+  # (можно добавить сервис phpMyAdmin, cron и т.д.)
+volumes:
+  db_data:
+  moodle_data:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </details>
