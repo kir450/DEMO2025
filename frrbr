@@ -1,3 +1,145 @@
+ Настроим протокол OSPF на HQ-RTR средствами FRR.
+ Установим FRR на HQ-RTR: apt install frr
+ Для настройки внутренней динамической маршрутизации для IPv4
+ используем протокол OSPFv2
+ Необходимо включить соответствующий демон в конфигурации
+ /etc/frr/daemons
+ Пропишем
+ nano /etc/frr/daemons
+ Вконфигурационном файле /etc/frr/daemons необходимо активировать
+ выбранный протокол для дальнейшей реализации его настройки:
+ ospfd = yes
+ Включаем и добавляем в автозагрузку службу FRR
+ systemctl enable--now frr
+ systemctl restart frr
+ Переходим в интерфейс управления симуляцией FRR при помощи vtysh
+ (аналог cisco)
+ vtysh
+ Входим в режим глобальной конфигурации
+ hq-rtr.au-team.irpo# configure terminal
+ Переходим в режим конфигурации OSPFv2
+ hq-rtr.au-team.irpo(config)# router ospf
+Указываем router-id
+ hq-rtr.au-team.irpo(config)# router-id 1.1.1.1
+ Переводим все интерфейсы в пассивный режим
+ hq-rtr.au-team.irpo(config-router)# passive-interface default
+ Объявляем локальные сети офиса HQ (сеть VLAN100 и VLAN200) и сеть
+ (GRE-туннеля)
+ hq-rtr.au-team.irpo(config-router)# network 192.168.100.0/26
+ area 0
+ hq-rtr.au-team.irpo(config-router)# network 192.168.100.64/28
+ area 0
+ hq-rtr.au-team.irpo(config-router)# network 10.10.0.0/30 area 0
+ Настройка аутентификации для области
+ area 0 authentication
+ Переводим интерфейс tun1 в активный режим
+ hq-rtr.au-team.irpo(config-if)# no passive-interface
+ tun1tterface tun1
+ Выходим из режима конфигурации OSPFv2
+ hq-rtr.au-team.irpo(config-router)# exit
+ Переходим в режим конфигурирования интерфейса tun1
+ hq-rtr.au-team.irpo(config)# interface tun1
+ Туннельный интерфейс tun1 делаем активным, для установления соседства с
+ BR-RTR иобмена внутренними маршрутами
+ hq-rtr.au-team.irpo(config-if)# no ip ospf network broadcast
+ Настройка аутентификации с открытым паролем password
+ ip ospf authentication
+ ip ospf authentication-key password
+ Выходим из режима конфигурации и tun1 и режима глобальной
+ конфигурации
+ hq-rtr.au-team.irpo(config-if)# exit
+hq-rtr.au-team.irpo(config)# exit
+ Сохраняем текущую конфигурацию:
+ hq-rtr.au-team.irpo# write
+ hq-rtr.au-team.irpo# exit
+ Перезапускаем FRR:systemctl restart frr
+
+
+
+
+
+
+
+ Настроим протокол OSPF на BR-RTR средствами FRR.
+ Установим FRR на BR-RTR: apt install frr
+ Для настройки внутренней динамической маршрутизации для IPv4
+ используем протокол OSPFv2
+ Необходимо включить соответствующий демон в конфигурации
+ /etc/frr/daemons
+ Пропишем
+ nano /etc/frr/daemons
+ Вконфигурационном файле /etc/frr/daemons необходимо активировать
+ выбранный протокол для дальнейшей реализации его настройки:
+ ospfd = yes
+ Включаем и добавляем в автозагрузку службу FRR
+ systemctl enable--now frr
+ systemctl restart frr
+ Переходим в интерфейс управления симуляцией FRR при помощи vtysh
+ (аналог cisco)
+ vtysh
+ Входим в режим глобальной конфигурации
+ br-rtr.au-team.irpo# configure terminal
+ Переходим в режим конфигурации OSPFv2
+ br-rtr.au-team.irpo(config)# router ospf
+ Указываем router-id
+br-rtr.au-team.irpo(config)# router-id 2.2.2.2
+ Переводим все интерфейсы в пассивный режим
+ br-rtr.au-team.irpo(config-router)# passive-interface default
+ Объявляем локальные сети офиса BR (сеть VLAN100 и VLAN200) и сеть
+ (GRE-туннеля)
+ br-rtr.au-team.irpo(config-router)# network 192.168.200.0/27
+ area 0
+ br-rtr.au-team.irpo(config-router)# network 10.10.0.0/30 area 0
+ Настройка аутентификации для области
+ area 0 authentication
+ Переводим интерфейс tun1 в активный режим
+ br-rtr.au-team.irpo(config-if)# no passive-interface
+ tun1tterface tun1
+ Выходим из режима конфигурации OSPFv2
+ br-rtr.au-team.irpo(config-router)# exit
+ Переходим в режим конфигурирования интерфейса tun1
+ br-rtr.au-team.irpo(config)# interface tun1
+ Туннельный интерфейс tun1 делаем активным, для установления соседства с
+ HQ-RTRиобмена внутренними маршрутами
+ br-rtr.au-team.irpo(config-if)# no ip ospf network broadcast
+ Настройка аутентификации с открытым паролем password
+ ip ospf authentication
+ ip ospf authentication-key password
+ Выходим из режима конфигурации и tun1 и режима глобальной
+ конфигурации
+ br-rtr.au-team.irpo(config-if)# exit
+ br-rtr.au-team.irpo(config)# exit
+ Сохраняем текущую конфигурацию:
+ br-rtr.au-team.irpo# write
+br-rtr.au-team.irpo# exit
+ Перезапускаем FRR:systemctl restart frr
+ Можемпроверить настройки на обоих маршрутизаторах командами:
+ vtysh
+ show running-confi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 root@br-rtr:/etc/frr# cat daemons
 
 
